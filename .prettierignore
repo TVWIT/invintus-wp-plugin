@@ -1,0 +1,13 @@
+# Ignore all files:
+*.*
+
+# Negate the above pattern for CSS files and for all JavaScript files:
+!*.js
+!*.php
+!*.html
+
+# Ignore minified JavaScript:
+*.min.js
+vendor/
+node_modules/
+build/

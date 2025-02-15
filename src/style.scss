@@ -1,0 +1,237 @@
+/**
+ * The following styles get applied both on the front of your site
+ * and in the editor.
+ *
+ * Replace them with your own styles or remove the file completely.
+ */
+:root {
+  --invintus-player-bottom-margin: 1.875em;
+}
+
+.wp-block-acf-invintus-event, .wp-block-taproot-invintus {
+  .invintus-player {
+    font-size: 16px;
+    margin-bottom: var(--invintus-player-bottom-margin);
+
+    .inv-underlay {
+      &--title {
+        h3 {
+          font-size: 1.125em;
+        }
+
+        small {
+          font-size: 0.875em;
+        }
+      }
+
+      &--actions {
+        gap: 0.25em;
+
+        button {
+          gap: 0.125em;
+          margin: 0 !important;
+
+          span {
+            padding: 0 !important;
+
+            &:empty {
+              display: none;
+            }
+          }
+        }
+      }
+
+      &--categories {
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 0.875em;
+        gap: 0.25em;
+
+        label {
+          margin: 0;
+        }
+
+        &__category {
+          border-radius: 0.1875em !important;
+          margin-left: 0 !important;
+        }
+      }
+
+      &--location {
+        display: flex;
+        flex-wrap: wrap;
+        font-size: 0.875em;
+        gap: 0.25em;
+
+        > span {
+          margin: 0 !important;
+        }
+      }
+    }
+
+    .inv-tabs {
+      [role="button"] {
+        align-items: center;
+        display: flex;
+        gap: 0.25em;
+      }
+
+      .inv-tabs--tab--label {
+        padding: 0;
+      }
+    }
+
+    .inv-tab--content {
+      margin-top: 0.625em;
+      padding: 0 !important;
+
+      &.transcript {
+        .inv-transcript--disclaimer {
+          border-radius: 0.1875em !important;
+          gap: 0.625em;
+          line-height: 1.25em;
+          padding: 1.25em;
+
+          > div {
+            margin: 0 !important;
+            padding: 0 !important;
+
+            &:first-child {
+              cursor: pointer;
+              font-size: 0.75em;
+            }
+          }
+        }
+
+        .inv-transcript--actions {
+
+          &_help {
+            padding: 0;
+
+            .inv-action__download-transcript {
+              height: 100% !important;
+            }
+          }
+
+          &_follow {
+            font-size: 0.875em;
+
+            > div {
+              align-items: center;
+              display: flex;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+          }
+        }
+
+        .inv-transcript--feed {
+          .inv-transcript--feed_item {
+            font-size: 0.875em;
+            height: auto !important;
+            line-height: 1.25em;
+
+            > div {
+              gap: 0.625em;
+              height: 100%;
+              margin: 0;
+              padding: 0.625em;
+
+              > div:not(.inv-transcript--feed_item--time) {
+                margin: 0 !important;
+                padding: 0 !important;
+              }
+            }
+
+            &-text {
+              font-size: 1.25em;
+              line-height: 1.25em;
+            }
+          }
+        }
+      }
+
+      &.share {
+        #inv-tab--share {
+          display: flex;
+          flex-direction: column;
+          gap: 0.625em;
+        }
+
+        .form-control {
+          margin: 0 !important;
+        }
+
+        .invintus__input-label {
+          margin: 0 !important;
+        }
+
+        .invintus--time-inputs {
+          display: flex !important;
+          float: none !important;
+          gap: 0.625em;
+          margin: 0 !important;
+
+          // small media query
+          @media (max-width: 767px) {
+            flex-direction: column;
+          }
+
+          .invintus--inline-input-grouping {
+            display: flex !important;
+            gap: 0.25em;
+
+            > div {
+              display: flex !important;
+              padding: 0 !important;
+            }
+          }
+
+          .invintus--time-input-group {
+            display: flex !important;
+            flex: 1;
+            flex-direction: column;
+            float: none !important;
+            gap: 0.5em;
+            margin: 0 !important;
+            width: auto !important;
+
+            label {
+              margin: 0 !important;
+            }
+
+            .invintus--label {
+              align-items: center;
+
+              label {
+                align-items: center;
+                display: inline-flex;
+                font-size: 0.875em;
+                gap: 0.625em;
+              }
+            }
+
+            .cue-action, .invintus--nudge-group {
+              svg {
+                height: 0.625em;
+                width: auto;
+              }
+
+              button {
+                display: inline-flex !important;
+                gap: 0.5em;
+                margin: 0 !important;
+              }
+            }
+
+            .invintus--value {
+              input {
+                margin: 0;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

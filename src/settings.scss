@@ -1,0 +1,84 @@
+:root {
+  --invintus-primary: #2c373f;
+}
+
+#invintus-app-settings {
+  inset: 0;
+
+  .invintus-toolbar {
+    align-items: center;
+    background: var(--invintus-primary);
+    display: flex;
+    height: 80px;
+    margin-left: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+
+    .invintus-icon {
+      svg {
+        height: 48px;
+        width: 48px;
+      }
+    }
+  }
+
+  .invintus-app-settings-fields {
+    margin-inline: auto;
+    margin-top: 30px;
+    max-width: 600px;
+    width: 75%;
+
+    &__player_preferences_purge {
+      margin-top: 22px;
+
+      .components-spinner {
+        margin: 0;
+      }
+    }
+  }
+
+  tbody {
+    background: white;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+
+    tr {
+      border-bottom: 1px solid #c3c4c7;
+
+      th {
+        font-weight: 600;
+        padding: 10px 15px;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      td {
+        padding: 10px 15px;
+        vertical-align: middle;
+
+        input[type="text"], input[type="password"], select {
+          max-width: 25rem;
+          width: 100%;
+        }
+      }
+    }
+  }
+
+  &__preferences-reset {
+    align-items: center;
+    display: flex;
+    gap: 4px;
+    max-width: 25rem;
+
+    .button {
+      margin: 0;
+    }
+  }
+
+  .snackbar-container {
+    bottom: 20px;  // Adjust as needed for spacing from the bottom
+    position: fixed;
+    right: 20px;    // Adjust as needed for spacing from the left
+    z-index: 1000; // Ensure it's above other elements
+  }
+}

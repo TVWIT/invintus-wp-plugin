@@ -1,0 +1,147 @@
+import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
+import { PanelBody, Panel, TextControl, ToggleControl } from '@wordpress/components';
+import createUniqueId from './uid';
+import { useEffect } from 'react';
+import { InvintusIconFullColor } from './components/InvintusIcon'; // Adjust the
+import './editor.scss';
+import { __ } from '@wordpress/i18n';
+
+/**
+ * Edit function for the Invintus block.
+ *
+ * This function defines the editing interface for the Invintus block within the WordPress editor.
+ * It allows for the input of an event ID and toggling a simple event state, updating the embedded
+ * iframe accordingly in a debounced manner to optimize performance.
+ *
+ * @param {Object}   props               The properties passed down to the component.
+ * @param {Object}   props.attributes    Current attributes of the block, containing the event ID and simple event state.
+ * @param {Function} props.setAttributes Function to update the attributes of the block.
+ * @param {boolean}  props.isSelected    Indicates if the block is currently selected in the editor.
+ * @returns {WPElement}                  The element to render, defining the block's edit layout.
+ */
+export default function Edit( { attributes, setAttributes, isSelected } ) {
+  // Destructure block attributes for easy access.
+  const eventId = attributes?.invintus_event_id ?? '';
+  const isSimpleEvent = attributes?.invintus_event_is_simple ?? false;
+
+  // Check if the global configuration object is set.
+  const isConfigured = typeof invintusConfig !== 'undefined' && invintusConfig.clientId;
+
+  // Use WordPress's useBlockProps for block wrapper properties.
+  const blockProps = useBlockProps( {} );
+
+  /**
+   * This effect is responsible for launching the Invintus player.
+   * It is triggered when the eventId, isSimpleEvent, or isConfigured variables change.
+   * The effect is debounced by 300ms to prevent unnecessary updates.
+   */
+  useEffect( () => {
+    // Set a timeout to debounce the iframe source update.
+    const timeoutId = setTimeout( () => {
+      // Only proceed if we have an event ID and the configuration is valid.
+      if ( eventId && isConfigured ) {
+        // Construct the configuration object for the iframe URL.
+        const config = {
+          clientID: invintusConfig.clientId,
+          eventID: eventId,
+          playerPrefID: invintusConfig.defaultPlayerId,
+          nonce: invintusConfig.nonce,
+        };
+
+        // Add the 'simple' parameter if applicable.
+        if ( isSimpleEvent ) {
+          config.simple = true;
+        }
+
+        // Launch the Invintus player with the constructed configuration.
+        Invintus.launch( config )
+      }
+    }, 300 ); // 300ms delay for debouncing
+
+    // Cleanup function to clear the timeout if the component unmounts or if attributes change again before the timeout completes.
+    return () => {
+      clearTimeout( timeoutId );
+    };
+  }, [eventId, isSimpleEvent, isConfigured] );
+
+  /**
+   * Event handler for changes to the event ID input field.
+   * This function is called every time the user types in the input field for the event ID.
+   *
+   * @param {string} value The new value from the input field.
+   */
+  const onChangeEventId = ( newEventId ) => {
+    /**
+     * This block of code is responsible for updating the `invintus_event_id` attribute of the component.
+     * It first checks if the new event ID is different from the current one.
+     * If they are different, it sets the `invintus_event_id` attribute to an empty string and then updates it to the new event ID.
+     * This is done to force the component to re-render and update the javascript source.
+     * The update to the new event ID is deferred using `setTimeout` with a delay of 0 to prevent potential flickering issues.
+     * This allows the browser to finish any pending UI updates before re-rendering the component.
+     */
+    if ( newEventId !== eventId ) {
+      setAttributes( { invintus_event_id: '' } );
+
+      setTimeout( () => {
+        setAttributes( { invintus_event_id: newEventId } );
+      }, 0 );
+    }
+  };
+
+  /**
+   * Event handler for changes to the simple event toggle control.
+   * This function is called every time the user toggles the simple event state.
+   *
+   * @param {boolean} value The new state of the toggle control.
+   */
+  const onChangeIsSimple = ( value ) => {
+    // Update the simple event attribute immediately.
+    setAttributes( { invintus_event_is_simple: value } );
+  };
+
+  // Render the block's editing interface.
+  return (
+    <>
+      <div {...blockProps}>
+        {!isConfigured ? (
+          <div className="invintus-config-message">{ __( 'Please configure the Invintus Client ID.', 'invintus' ) }</div>
+        ) : (
+          <div id={createUniqueId( 'invintus-video' )} className="invintus-block">
+            {eventId ? (
+              <div className="invintus-video-wrapper">
+                <header>
+                  <InvintusIconFullColor />
+                  <div className="invintus-event-label">
+                    <span>{ __( 'Preview', 'invintus' ) }</span>
+                  </div>
+                  <div className="invintus-event-id">
+                    {eventId}
+                  </div>
+                </header>
+                <section>
+                  <div className="invintus-player"></div>
+                </section>
+              </div>
+            ) : (
+              <div className="invintus-placeholder no-player">
+                <div className="invintus-placeholder__notice">
+                  <span>{ __( 'Enter a valid Event ID', 'invintus' ) }</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+      {isSelected && isConfigured && (
+        <InspectorControls key="settings">
+          <Panel header="Event Settings">
+            <PanelBody>
+              <TextControl label="Event ID" value={eventId} onChange={onChangeEventId} />
+              <ToggleControl label="Use Simple Player" checked={isSimpleEvent} onChange={onChangeIsSimple} />
+            </PanelBody>
+          </Panel>
+        </InspectorControls>
+      )}
+    </>
+  );
+}
