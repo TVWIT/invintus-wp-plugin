@@ -99,11 +99,6 @@ To set up webhooks in WordPress:
 
 4. Invintus support will set up the webhook for you based on the provided information.
 
-When an Invintus action occurs, the plugin will:
-
-1. Create a new video page if it doesn't exist.
-2. Update the status and metadata of the video page.
-
 ### Settings
 
 You can configure various settings for the plugin:
