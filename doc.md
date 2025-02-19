@@ -77,24 +77,26 @@ The plugin is designed to receive webhooks from Invintus to automatically create
 
 To set up webhooks in WordPress:
 
-1. Ensure you have a user called "invintus-hooks" in your WordPress site. If not, create one:
+1. Ensure you have a user called "invintusHooks" in your WordPress site. If not, create one:
    - Go to Users > Add New.
-   - Fill in the required details and set the username as "invintus-hooks".
-   - Assign an appropriate role (e.g., Editor or Administrator).
+   - Fill in the required details and set the username as "invintusHooks".
+   - Assign an appropriate role of Administrator.
    - Click "Add New User".
 
 2. Add an application password for the "invintus-hooks" user:
    - Go to Users > All Users.
-   - Click on the "invintus-hooks" user to edit the user profile.
+   - Click on the "invintusHooks" user to edit the user profile.
    - Scroll down to the "Application Passwords" section.
    - Enter a name for the application password (e.g., "Invintus Webhook") and click "Add New Application Password".
    - Copy the generated application password and save it securely. You will need this password to authenticate the webhook requests.
 
 3. Contact Invintus support through the support portal in the control center. Provide them with the following information:
-   - The username ("invintus-hooks") and the application password you generated.
+   - The username ("invintusHooks") and the application password you generated.
    - The URL to your WordPress site where the webhook should be sent:
      ```
-     https://your-wordpress-site.com/wp-json/invintus/v1/webhook
+     https://your-wordpress-site.com/wp-json/invintus/v2
+      for adding/updating
+      https://your-wordpress-site.com/wp-json/invintus/v2/events/crud
      ```
 
 4. Invintus support will set up the webhook for you based on the provided information.
