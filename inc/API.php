@@ -901,7 +901,7 @@ class API extends WP_REST_Controller
 
     if ( !$invintus_log_retention || !is_numeric( $invintus_log_retention ) ) return;
 
-    $query = "DELETE FROM ${table_name} WHERE date < DATE_SUB( NOW(), INTERVAL ${invintus_log_retention} DAY )";
+    $query = "DELETE FROM $table_name WHERE date < DATE_SUB( NOW(), INTERVAL $invintus_log_retention DAY )";
 
     $wpdb->query( $query );
   }
@@ -1090,7 +1090,7 @@ class API extends WP_REST_Controller
 
     $table_name = $wpdb->prefix . 'invintus_events_relationships';
 
-    $query        = "SELECT COUNT(*) FROM ${table_name} WHERE event_id = ${event_id}";
+    $query        = "SELECT COUNT(*) FROM $table_name WHERE event_id = $event_id";
     $event_exists = $wpdb->get_var( $query );
 
     if ( $event_exists ):
