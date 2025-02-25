@@ -897,9 +897,11 @@ class API extends WP_REST_Controller
 
     $table_name = $wpdb->prefix . 'invintus_logs';
 
+    // Sanitize and validate the log retention value
     $invintus_log_retention = $this->invintus()->get_option( 'invintus_log_retention' );
+    $invintus_log_retention = is_numeric( $invintus_log_retention ) ? intval( $invintus_log_retention ) : null;
 
-    if ( !$invintus_log_retention || !is_numeric( $invintus_log_retention ) ) return;
+    if ( !$invintus_log_retention ) return;
 
     $query = "DELETE FROM $table_name WHERE date < DATE_SUB( NOW(), INTERVAL $invintus_log_retention DAY )";
 
