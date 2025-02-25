@@ -374,48 +374,50 @@ class API extends WP_REST_Controller
       }
     ] );
 
-    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings', [
-      'methods'             => WP_REST_Server::CREATABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'set_settings'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
-
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
-    ] );
-
-    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings', [
-      'methods'             => WP_REST_Server::READABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'get_settings'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
-
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
-    ] );
-
     register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings/player_prefs', [
-      'methods'             => WP_REST_Server::DELETABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'purge_player_prefs'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
+      [
+        'methods'             => WP_REST_Server::READABLE,
+        'callback'            => [$this, 'get_player_prefs'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
 
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
+      [
+        'methods'             => WP_REST_Server::DELETABLE,
+        'callback'            => [$this, 'purge_player_prefs'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
+
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
     ] );
 
-    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings/player_prefs', [
-      'methods'             => WP_REST_Server::READABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'get_player_prefs'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
+    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings', [
+      [
+        'methods'             => WP_REST_Server::CREATABLE,
+        'callback'            => [$this, 'set_settings'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
 
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
+      [
+        'methods'             => WP_REST_Server::READABLE,
+        'callback'            => [$this, 'get_settings'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
+
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
     ] );
   }
 
