@@ -520,8 +520,8 @@ class API extends WP_REST_Controller
 
     $term_field_id = sprintf( '%s_%d', $taxonomy, $term_id );
 
-    update_field( 'invintus_category_id', $category_id, $term_field_id );
-    update_field( 'invintus_parent_category_id', $child_id, $term_field_id );
+    update_term_meta( $term_id, 'invintus_category_id', $category_id );
+    update_term_meta( $term_id, 'invintus_parent_category_id', $child_id );
 
     return $term_id;
   }
@@ -726,7 +726,7 @@ class API extends WP_REST_Controller
 
     // Assign event custom meta data
     foreach ( $this->get_post_meta_keys() as $key ):
-      update_field( 'invintus_' . $key, $data[$key], $post_id );
+      update_post_meta( $post_id, 'invintus_' . $key, $data[$key] );
     endforeach;
 
     return $data;
@@ -1009,8 +1009,8 @@ class API extends WP_REST_Controller
 
     $term_field_id = sprintf( '%s_%d', $taxonomy, $term_id );
 
-    update_field( 'invintus_category_id', $category_id, $term_field_id );
-    update_field( 'invintus_parent_category_id', $child_parent_id, $term_field_id );
+    update_term_meta( $term_id, 'invintus_category_id', $category_id );
+    update_term_meta( $term_id, 'invintus_parent_category_id', $child_parent_id );
 
     return $term_id;
   }
@@ -1066,7 +1066,7 @@ class API extends WP_REST_Controller
 
     // Assign event custom meta data
     foreach ( $this->get_post_meta_keys() as $key ):
-      update_field( 'invintus_' . $key, $data[$key], $post_id );
+      update_post_meta( $post_id, 'invintus_' . $key, $data[$key] );
     endforeach;
 
     return $data;
