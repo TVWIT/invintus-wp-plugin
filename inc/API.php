@@ -374,48 +374,50 @@ class API extends WP_REST_Controller
       }
     ] );
 
-    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings', [
-      'methods'             => WP_REST_Server::CREATABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'set_settings'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
-
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
-    ] );
-
-    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings', [
-      'methods'             => WP_REST_Server::READABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'get_settings'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
-
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
-    ] );
-
     register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings/player_prefs', [
-      'methods'             => WP_REST_Server::DELETABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'purge_player_prefs'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
+      [
+        'methods'             => WP_REST_Server::READABLE,
+        'callback'            => [$this, 'get_player_prefs'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
 
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
+      [
+        'methods'             => WP_REST_Server::DELETABLE,
+        'callback'            => [$this, 'purge_player_prefs'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
+
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
     ] );
 
-    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings/player_prefs', [
-      'methods'             => WP_REST_Server::READABLE,
-      'show_in_index'       => false,
-      'callback'            => [$this, 'get_player_prefs'],
-      'permission_callback' => function( $request ) {
-        if ( current_user_can( 'publish_posts' ) ) return true;
+    register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings', [
+      [
+        'methods'             => WP_REST_Server::CREATABLE,
+        'callback'            => [$this, 'set_settings'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
 
-        return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
-      }
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
+      [
+        'methods'             => WP_REST_Server::READABLE,
+        'callback'            => [$this, 'get_settings'],
+        'permission_callback' => function( $request ) {
+          if ( current_user_can( 'publish_posts' ) ) return true;
+
+          return new WP_Error( 'rest_invalid_permissions', __( 'Sorry, you do not have the proper permission to access this content.', 'invintus' ), ['status' => rest_authorization_required_code()] );
+        },
+        'show_in_index' => false,
+      ],
     ] );
   }
 
@@ -520,8 +522,8 @@ class API extends WP_REST_Controller
 
     $term_field_id = sprintf( '%s_%d', $taxonomy, $term_id );
 
-    update_field( 'invintus_category_id', $category_id, $term_field_id );
-    update_field( 'invintus_parent_category_id', $child_id, $term_field_id );
+    update_term_meta( $term_id, 'invintus_category_id', $category_id );
+    update_term_meta( $term_id, 'invintus_parent_category_id', $child_id );
 
     return $term_id;
   }
@@ -726,7 +728,7 @@ class API extends WP_REST_Controller
 
     // Assign event custom meta data
     foreach ( $this->get_post_meta_keys() as $key ):
-      update_field( 'invintus_' . $key, $data[$key], $post_id );
+      update_post_meta( $post_id, 'invintus_' . $key, $data[$key] );
     endforeach;
 
     return $data;
@@ -897,11 +899,13 @@ class API extends WP_REST_Controller
 
     $table_name = $wpdb->prefix . 'invintus_logs';
 
+    // Sanitize and validate the log retention value
     $invintus_log_retention = $this->invintus()->get_option( 'invintus_log_retention' );
+    $invintus_log_retention = is_numeric( $invintus_log_retention ) ? intval( $invintus_log_retention ) : null;
 
-    if ( !$invintus_log_retention || !is_numeric( $invintus_log_retention ) ) return;
+    if ( !$invintus_log_retention ) return;
 
-    $query = "DELETE FROM ${table_name} WHERE date < DATE_SUB( NOW(), INTERVAL ${invintus_log_retention} DAY )";
+    $query = "DELETE FROM $table_name WHERE date < DATE_SUB( NOW(), INTERVAL $invintus_log_retention DAY )";
 
     $wpdb->query( $query );
   }
@@ -957,7 +961,7 @@ class API extends WP_REST_Controller
    */
   private function prepend_invintus_player( $event_id )
   {
-    return sprintf( '<!-- wp:acf/invintus-event {"name":"acf/invintus-event","data":{"invintus_event_id":"%s","_invintus_event_id":"field_6171debf2af70","invintus_event_is_simple":"","_invintus_event_is_simple":"field_6171decd2af71"},"align":"","mode":"preview","wpClassName":"wp-block-acf-invintus-event"} /-->%s', $event_id, "\n" );
+    return sprintf( '<!-- wp:taproot/invintus {"invintus_event_id":"%s"} /-->%s', $event_id, "\n" );
   }
 
   /**
@@ -1009,8 +1013,8 @@ class API extends WP_REST_Controller
 
     $term_field_id = sprintf( '%s_%d', $taxonomy, $term_id );
 
-    update_field( 'invintus_category_id', $category_id, $term_field_id );
-    update_field( 'invintus_parent_category_id', $child_parent_id, $term_field_id );
+    update_term_meta( $term_id, 'invintus_category_id', $category_id );
+    update_term_meta( $term_id, 'invintus_parent_category_id', $child_parent_id );
 
     return $term_id;
   }
@@ -1066,7 +1070,7 @@ class API extends WP_REST_Controller
 
     // Assign event custom meta data
     foreach ( $this->get_post_meta_keys() as $key ):
-      update_field( 'invintus_' . $key, $data[$key], $post_id );
+      update_post_meta( $post_id, 'invintus_' . $key, $data[$key] );
     endforeach;
 
     return $data;
@@ -1090,7 +1094,7 @@ class API extends WP_REST_Controller
 
     $table_name = $wpdb->prefix . 'invintus_events_relationships';
 
-    $query        = "SELECT COUNT(*) FROM ${table_name} WHERE event_id = ${event_id}";
+    $query        = "SELECT COUNT(*) FROM $table_name WHERE event_id = $event_id";
     $event_exists = $wpdb->get_var( $query );
 
     if ( $event_exists ):
