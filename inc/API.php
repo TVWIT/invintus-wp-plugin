@@ -957,7 +957,7 @@ class API extends WP_REST_Controller
    */
   private function prepend_invintus_player( $event_id )
   {
-    return sprintf( '<!-- wp:acf/invintus-event {"name":"acf/invintus-event","data":{"invintus_event_id":"%s","_invintus_event_id":"field_6171debf2af70","invintus_event_is_simple":"","_invintus_event_is_simple":"field_6171decd2af71"},"align":"","mode":"preview","wpClassName":"wp-block-acf-invintus-event"} /-->%s', $event_id, "\n" );
+    return sprintf( '<!-- wp:taproot/invintus {"invintus_event_id":"%s"} /-->%s', $event_id, "\n" );
   }
 
   /**
