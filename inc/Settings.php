@@ -102,28 +102,27 @@ class Settings
    */
   public function admin_scripts( $hook_suffix )
   {
-    // Register the 'invintus-app' script.
-    wp_register_script( 'invintus-app', $this->invintus()->get_invintus_script_url(), ['underscore'], false, true );
-
-    // Localize the 'invintus-app' script with data from the plugin's settings.
-    wp_localize_script( 'invintus-app', 'invintusConfig', [
-      'nonce'                => wp_create_nonce( 'wp_rest' ),
-      'clientId'             => $this->get_client_id(),                                                     // Get the client ID.
-      'defaultPlayerId'      => $this->get_option( 'invintus_player_preference_default' ),                  // Get the default player ID.
-      'siteUrl'              => get_site_url(),                                                             // Get the site URL.
-      'playerUrl'            => sprintf( '%s/%s', get_site_url(), $this->invintus()->get_preview_url() ),   // Get the preview URL.
-      'defaultWatchUrl'      => get_home_url( null, $this->invintus()->get_default_watch_endpoint() ),      // Get the default watch URL.
-      'defaultWatchEndpoint' => $this->invintus()->get_default_watch_endpoint(),                         // Get the default watch endpoint.
-    ] );
-
-    // Get the current screen.
+    // Get the current screen
     $screen = get_current_screen();
 
-    // If the current screen is the custom post type screen or the options page, enqueue the 'invintus-app' script.
-    if ( $screen->id === $this->invintus()->get_cpt_slug() || $hook_suffix === $this->hook_suffix )
-      wp_enqueue_script( 'invintus-app' );
+    // Register and enqueue the Invintus player script
+    wp_register_script( 'invintus-app', $this->invintus()->get_invintus_script_url(), ['underscore'], null, true );
 
-    // If the current page is the options page, enqueue the options page styles.
+    // Localize the script with necessary data
+    wp_localize_script( 'invintus-app', 'invintusConfig', [
+      'nonce'                => wp_create_nonce( 'wp_rest' ),
+      'clientId'             => $this->get_client_id(),
+      'defaultPlayerId'      => $this->get_option( 'invintus_player_preference_default' ),
+      'siteUrl'              => get_site_url(),
+      'playerUrl'            => sprintf( '%s/%s', get_site_url(), $this->invintus()->get_preview_url() ),
+      'defaultWatchUrl'      => get_home_url( null, $this->invintus()->get_default_watch_endpoint() ),
+      'defaultWatchEndpoint' => $this->invintus()->get_default_watch_endpoint(),
+    ] );
+
+    // Always enqueue the script on admin pages
+    wp_enqueue_script( 'invintus-app' );
+
+    // If we're on the options page, enqueue additional scripts and styles
     if ( $hook_suffix === $this->hook_suffix ):
       $this->enqueue_options_page_styles();
       $this->enqueue_options_page_scripts();
