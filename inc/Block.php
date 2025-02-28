@@ -3,6 +3,7 @@
 namespace Taproot\Invintus;
 
 use WP_Block_Type_Registry;
+use Taproot\Invintus\Settings;
 
 class Block
 {
@@ -138,11 +139,14 @@ class Block
    */
   private function render_block_html( $attributes )
   {
+    $settings = new Settings();
+
     if ( !self::$script_localized ):
       wp_enqueue_script( 'invintus-player-script', $this->invintus()->get_invintus_script_url(), [], null, true );
 
       wp_localize_script( 'invintus-player-script', 'invintusConfig', [
-        'clientId' => $this->client_id,
+        'clientId'     => $this->client_id,
+        'playerPrefID' => $settings->get_option( 'invintus_player_preference_default' ) ?? '',
       ] );
 
       self::$script_localized = true;
