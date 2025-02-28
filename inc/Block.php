@@ -52,9 +52,7 @@ class Block
   public function block_init()
   {
     // Register the main block type.
-    register_block_type( sprintf( '%sbuild', INVINTUS_PLUGIN_PATH ), [
-      'render_callback' => [$this, 'render'],
-    ] );
+    register_block_type( sprintf( '%sbuild', INVINTUS_PLUGIN_PATH ) );
 
     // Register the legacy block type if it's not already registered.
     if ( !WP_Block_Type_Registry::get_instance()->is_registered( 'acf/invintus-event' ) ):
@@ -65,15 +63,22 @@ class Block
   }
 
   /**
-   * Renders the block.
-   *
-   * @param  array  $attributes The attributes of the block.
-   * @param  string $content    The content of the block.
-   * @return string The rendered block.
+   * Enqueues the necessary scripts for the block.
    */
-  public function render( $attributes, $content )
+  public function enqueue_block_scripts()
   {
-    return $this->render_block_html( $attributes );
+    $settings = new Settings();
+
+    if ( !self::$script_localized && has_block( 'taproot/invintus' ) ):
+      wp_enqueue_script( 'invintus-player-script', $this->invintus()->get_invintus_script_url(), [], null, true );
+
+      wp_localize_script( 'invintus-player-script', 'invintusConfig', [
+        'clientId'     => $this->client_id,
+        'playerPrefID' => $settings->get_option( 'invintus_player_preference_default' ) ?? '',
+      ] );
+
+      self::$script_localized = true;
+    endif;
   }
 
   /**
@@ -86,14 +91,25 @@ class Block
   public function render_legacy( $attributes, $content )
   {
     wp_enqueue_script( 'taproot-invintus-view-script' );
+
     // Ensure attributes are formatted correctly for legacy blocks
     $legacyAttributes = [
       'invintus_event_id'        => $attributes['data']['invintus_event_id']        ?? '',
       'invintus_event_is_simple' => $attributes['data']['invintus_event_is_simple'] ?? false,
-      'wpClassName'              => $attributes['wpClassName']                      ?? '',
+      'invintus_player_pref_id'  => '',  // Legacy blocks don't support player preferences
     ];
 
-    return $this->render_block_html( $legacyAttributes );
+    // Get the default player preference
+    $settings     = new Settings();
+    $playerPrefId = $settings->get_option( 'invintus_player_preference_default' ) ?? '';
+
+    return sprintf(
+      '<div %s><div class="invintus-player" data-eventid="%s" data-simple="%s" data-playerid="%s"></div></div>',
+      get_block_wrapper_attributes( apply_filters( 'invintus/block/attributes', [] ) ),
+      esc_attr( $legacyAttributes['invintus_event_id'] ),
+      esc_attr( $legacyAttributes['invintus_event_is_simple'] ),
+      esc_attr( $playerPrefId )
+    );
   }
 
   /**
@@ -114,6 +130,7 @@ class Block
   private function actions()
   {
     add_action( 'init', [$this, 'block_init'] );
+    add_action( 'wp_enqueue_scripts', [$this, 'enqueue_block_scripts'] );
   }
 
   /**
@@ -123,43 +140,5 @@ class Block
    */
   private function filters()
   {
-  }
-
-  /**
-   * Helper method to render the common HTML structure of the block.
-   *
-   * This method first checks if the script has been localized using the 'script_localized' flag.
-   * If the script has not been localized, it enqueues the necessary scripts and localizes the script with the necessary configurations.
-   * The 'script_localized' flag is then set to true to prevent the scripts from being enqueued and localized multiple times.
-   *
-   * After that, it returns the HTML structure for the block with the appropriate classes and data attributes.
-   *
-   * @param  array  $attributes The attributes of the block.
-   * @return string The HTML output for the block.
-   */
-  private function render_block_html( $attributes )
-  {
-    $settings = new Settings();
-
-    if ( !self::$script_localized ):
-      wp_enqueue_script( 'invintus-player-script', $this->invintus()->get_invintus_script_url(), [], null, true );
-
-      wp_localize_script( 'invintus-player-script', 'invintusConfig', [
-        'clientId'     => $this->client_id,
-        'playerPrefID' => $settings->get_option( 'invintus_player_preference_default' ) ?? '',
-      ] );
-
-      self::$script_localized = true;
-    endif;
-
-    $playerPrefId = !empty( $attributes['invintus_player_pref_id'] ) ? $attributes['invintus_player_pref_id'] : $settings->get_option( 'invintus_player_preference_default' );
-
-    return sprintf(
-      '<div %s><div class="invintus-player" data-eventid="%s" data-simple="%s" data-playerid="%s"></div></div>',
-      get_block_wrapper_attributes( apply_filters( 'invintus/block/attributes', [] ) ),
-      esc_attr( $attributes['invintus_event_id'] ?? '' ),
-      esc_attr( $attributes['invintus_event_is_simple'] ?? false ),
-      esc_attr( $playerPrefId )
-    );
   }
 }
