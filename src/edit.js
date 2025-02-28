@@ -158,11 +158,11 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
                 label={ __( 'Player Preference', 'invintus' ) }
                 value={ playerPrefId }
                 options={ [
-                  { value: '', label: __( 'Default', 'invintus' ) },
+                  { value: '', label: __( 'Global Player Preference', 'invintus' ) },
                   ...playerPreferences
                 ] }
                 onChange={ onChangePlayerPref }
-                help={ __( 'Select a player preference or leave as default to use the global setting.', 'invintus' ) }
+                help={ __( 'Select a player preference or leave as default to use the global player preference.', 'invintus' ) }
               />
               <ToggleControl label="Use Simple Player" checked={isSimpleEvent} onChange={onChangeIsSimple} />
             </PanelBody>
