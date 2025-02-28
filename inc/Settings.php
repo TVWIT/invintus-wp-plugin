@@ -113,6 +113,7 @@ class Settings
       'nonce'                => wp_create_nonce( 'wp_rest' ),
       'clientId'             => $this->get_client_id(),
       'defaultPlayerId'      => $this->get_option( 'invintus_player_preference_default' ),
+      'playerPreferences'    => $this->get_invintus_player_preferences(),
       'siteUrl'              => get_site_url(),
       'playerUrl'            => sprintf( '%s/%s', get_site_url(), $this->invintus()->get_preview_url() ),
       'defaultWatchUrl'      => get_home_url( null, $this->invintus()->get_default_watch_endpoint() ),

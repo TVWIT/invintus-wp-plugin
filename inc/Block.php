@@ -152,11 +152,14 @@ class Block
       self::$script_localized = true;
     endif;
 
+    $playerPrefId = !empty( $attributes['invintus_player_pref_id'] ) ? $attributes['invintus_player_pref_id'] : $settings->get_option( 'invintus_player_preference_default' );
+
     return sprintf(
-      '<div %s><div class="invintus-player" data-eventid="%s" data-simple="%s"></div></div>',
+      '<div %s><div class="invintus-player" data-eventid="%s" data-simple="%s" data-playerid="%s"></div></div>',
       get_block_wrapper_attributes( apply_filters( 'invintus/block/attributes', [] ) ),
       esc_attr( $attributes['invintus_event_id'] ?? '' ),
-      esc_attr( $attributes['invintus_event_is_simple'] ?? false )
+      esc_attr( $attributes['invintus_event_is_simple'] ?? false ),
+      esc_attr( $playerPrefId )
     );
   }
 }
