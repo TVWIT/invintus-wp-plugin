@@ -1,5 +1,5 @@
 import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
-import { PanelBody, Panel, TextControl, ToggleControl } from '@wordpress/components';
+import { PanelBody, Panel, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
 import createUniqueId from './uid';
 import { useEffect } from 'react';
 import { InvintusIconFullColor } from './components/InvintusIcon'; // Adjust the
@@ -23,16 +23,23 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
   // Destructure block attributes for easy access.
   const eventId = attributes?.invintus_event_id ?? '';
   const isSimpleEvent = attributes?.invintus_event_is_simple ?? false;
+  const playerPrefId = attributes?.invintus_player_pref_id ?? '';
 
   // Check if the global configuration object is set.
   const isConfigured = typeof invintusConfig !== 'undefined' && invintusConfig.clientId;
+
+  // Transform player preferences object into array of options
+  const playerPreferences = invintusConfig?.playerPreferences ? Object.entries(invintusConfig.playerPreferences).map(([value, label]) => ({
+    value,
+    label
+  })).sort((a, b) => a.label.localeCompare(b.label)) : [];
 
   // Use WordPress's useBlockProps for block wrapper properties.
   const blockProps = useBlockProps( {} );
 
   /**
    * This effect is responsible for launching the Invintus player.
-   * It is triggered when the eventId, isSimpleEvent, or isConfigured variables change.
+   * It is triggered when the eventId, isSimpleEvent, playerPrefId, or isConfigured variables change.
    * The effect is debounced by 300ms to prevent unnecessary updates.
    */
   useEffect( () => {
@@ -44,7 +51,7 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
         const config = {
           clientID: invintusConfig.clientId,
           eventID: eventId,
-          playerPrefID: invintusConfig.defaultPlayerId,
+          playerPrefID: playerPrefId || invintusConfig.defaultPlayerId,
           nonce: invintusConfig.nonce,
         };
 
@@ -62,7 +69,7 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
     return () => {
       clearTimeout( timeoutId );
     };
-  }, [eventId, isSimpleEvent, isConfigured] );
+  }, [eventId, isSimpleEvent, playerPrefId, isConfigured] );
 
   /**
    * Event handler for changes to the event ID input field.
@@ -97,6 +104,16 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
   const onChangeIsSimple = ( value ) => {
     // Update the simple event attribute immediately.
     setAttributes( { invintus_event_is_simple: value } );
+  };
+
+  /**
+   * Event handler for changes to the player preference dropdown.
+   * This function is called every time the user selects a different player preference.
+   *
+   * @param {string} value The new player preference ID.
+   */
+  const onChangePlayerPref = ( value ) => {
+    setAttributes( { invintus_player_pref_id: value } );
   };
 
   // Render the block's editing interface.
@@ -137,6 +154,16 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
           <Panel header="Event Settings">
             <PanelBody>
               <TextControl label="Event ID" value={eventId} onChange={onChangeEventId} />
+              <SelectControl
+                label={ __( 'Player Preference', 'invintus' ) }
+                value={ playerPrefId }
+                options={ [
+                  { value: '', label: __( 'Default', 'invintus' ) },
+                  ...playerPreferences
+                ] }
+                onChange={ onChangePlayerPref }
+                help={ __( 'Select a player preference or leave as default to use the global setting.', 'invintus' ) }
+              />
               <ToggleControl label="Use Simple Player" checked={isSimpleEvent} onChange={onChangeIsSimple} />
             </PanelBody>
           </Panel>

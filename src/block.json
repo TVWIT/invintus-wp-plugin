@@ -18,6 +18,10 @@
     "invintus_event_is_simple": {
       "type": "boolean",
       "default": false
+    },
+    "invintus_player_pref_id": {
+      "type": "string",
+      "default": ""
     }
   },
   "textdomain": "invintus",

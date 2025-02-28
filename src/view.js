@@ -33,15 +33,12 @@ const invintusWP = ( () => {
 
           const config = {
             clientID: invintusConfig.clientId,
-            playerPrefID: invintusConfig.playerPrefID,
+            playerPrefID: $player.dataset.playerid,
             eventID: $player.dataset.eventid,
             simple: $player.dataset.simple,
           }
 
-          console.log( config );
-
           Invintus.launch( config )
-
         } )
       }
     },
