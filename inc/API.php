@@ -1131,6 +1131,9 @@ class API extends WP_REST_Controller
     $data   = $this->map_data( $response );
     $events = $this->event_exists( $data );
 
+    // Allow developers to modify or extend the data before it's saved
+    $data = apply_filters( 'invintus/data/before_save', $data, $events );
+
     // handle "private" separate from other crud events
     // TODO create a dev hook to toggle private video visibility
     if ( 'private' == $data['post_status'] ):
@@ -1154,9 +1157,21 @@ class API extends WP_REST_Controller
 
     // If event exists update, if it doesn't then insert
     if ( $events ):
-      return $this->update_events( array_merge( $data, ['ID' => $events[0]] ) );
+      $result = $this->update_events( array_merge( $data, ['ID' => $events[0]] ) );
+      // Fire after_save hook with the updated data, post ID, and operation type
+      do_action( 'invintus/data/after_save', $result, $events[0], 'update' );
+
+      return $result;
     else:
-      return $this->insert_events( $data );
+      $result = $this->insert_events( $data );
+      // Get the post ID from the result (it's stored in post meta)
+      $post_id = $this->event_exists( $result )[0] ?? null;
+      if ( $post_id ) {
+        // Fire after_save hook with the inserted data, new post ID, and operation type
+        do_action( 'invintus/data/after_save', $result, $post_id, 'insert' );
+      }
+
+      return $result;
     endif;
   }
 }
