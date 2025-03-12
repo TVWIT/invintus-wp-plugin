@@ -806,7 +806,7 @@ class API extends WP_REST_Controller
   {
     $event = $this->maybe_get( $data, 'event' );
 
-    if ( !$event ) return apply_filters( 'invintus/data/prepare', [] );
+    if ( !$event ) return apply_filters( 'invintus/data/prepare', [], [] );
 
     $post_date  = esc_attr( $this->maybe_get( $event, 'startDateTime', '' ) );
     $is_private = (bool) $this->maybe_get( $event, 'private', '' );
@@ -848,7 +848,7 @@ class API extends WP_REST_Controller
     // Override status if it's a private event
     if ( $is_private ) $data['post_status'] = 'private';
 
-    return apply_filters( 'invintus/data/prepare', $data );
+    return apply_filters( 'invintus/data/prepare', $data, $event );
   }
 
   /**
