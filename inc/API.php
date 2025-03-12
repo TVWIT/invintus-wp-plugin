@@ -680,7 +680,7 @@ class API extends WP_REST_Controller
    */
   private function get_post_meta_keys()
   {
-    return ['event_id', 'custom_id', 'caption', 'thumbnail', 'audio', 'location', 'total_runtime'];
+    return ['event_id', 'custom_id', 'event_description', 'caption', 'thumbnail', 'audio', 'location', 'total_runtime'];
   }
 
   /**
@@ -820,21 +820,22 @@ class API extends WP_REST_Controller
     $event_id = end( $_event_id );
 
     $data = [
-      'edit_date'     => true,
-      'post_title'    => $this->prepare_title( $this->maybe_get( $event, 'title', '' ) ),
-      'post_name'     => sanitize_title_with_dashes( $this->prepare_title( $this->maybe_get( $event, 'title', '' ) ) ) . '-' . $event_id,
-      'post_date'     => $post_date,
-      'post_status'   => $this->map_statuses( $this->maybe_get( $event, 'eventStatus', '' ) ),
-      'post_content'  => $this->prepare_content( $event_id, $this->maybe_get( $event, 'description', '' ) ),
-      'post_type'     => $this->invintus()->get_cpt_slug(),
-      'event_id'      => esc_attr( $event_id ),
-      'custom_id'     => esc_attr( $this->maybe_get( $event, 'customID', '' ) ),
-      'caption'       => esc_url( $this->maybe_get( $event, 'captionPath', '' ) ),
-      'thumbnail'     => esc_url( $this->maybe_get( $event, 'videoThumbnail', '' ) ),
-      'audio'         => esc_url( $this->maybe_get( $event, 'publishedAudio', '' ) ),
-      'location'      => esc_url( $this->maybe_get( $event, 'locationName', '' ) ),
-      'total_runtime' => esc_attr( $this->maybe_get( $event, 'totalRunTime', '' ) ),
-      'taxonomies'    => [
+      'edit_date'         => true,
+      'post_title'        => $this->prepare_title( $this->maybe_get( $event, 'title', '' ) ),
+      'post_name'         => sanitize_title_with_dashes( $this->prepare_title( $this->maybe_get( $event, 'title', '' ) ) ) . '-' . $event_id,
+      'post_date'         => $post_date,
+      'post_status'       => $this->map_statuses( $this->maybe_get( $event, 'eventStatus', '' ) ),
+      'post_content'      => $this->prepare_content( $event_id, $this->maybe_get( $event, 'description', '' ) ),
+      'post_type'         => $this->invintus()->get_cpt_slug(),
+      'event_id'          => esc_attr( $event_id ),
+      'custom_id'         => esc_attr( $this->maybe_get( $event, 'customID', '' ) ),
+      'event_description' => esc_attr( $this->maybe_get( $event, 'description', '' ) ),
+      'caption'           => esc_url( $this->maybe_get( $event, 'captionPath', '' ) ),
+      'thumbnail'         => esc_url( $this->maybe_get( $event, 'videoThumbnail', '' ) ),
+      'audio'             => esc_url( $this->maybe_get( $event, 'publishedAudio', '' ) ),
+      'location'          => esc_url( $this->maybe_get( $event, 'locationName', '' ) ),
+      'total_runtime'     => esc_attr( $this->maybe_get( $event, 'totalRunTime', '' ) ),
+      'taxonomies'        => [
         'invintus_tag' => $this->maybe_get( $event, 'keywords', [] ),
         // 'invintus_category' => isset( $event['categories'] ) ? $event['categories'] : []
       ],
