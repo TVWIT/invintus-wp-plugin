@@ -63,6 +63,7 @@ class Metadata
     $meta_fields = [
       'invintus_event_id',
       'invintus_custom_id',
+      'invintus_event_description',
       'invintus_caption',
       'invintus_audio',
       'invintus_location',
