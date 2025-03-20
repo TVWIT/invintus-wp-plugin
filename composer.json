@@ -1,5 +1,5 @@
 {
-  "name": "invintus",
+  "name": "invintus/invintus-wp-plugin",
   "autoload": {
     "psr-4": {
       "Taproot\\Invintus\\": "inc/"
