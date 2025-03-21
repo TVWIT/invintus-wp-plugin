@@ -1,5 +1,6 @@
 {
   "name": "invintus/invintus-wp-plugin",
+  "type": "wordpress-plugin",
   "autoload": {
     "psr-4": {
       "Taproot\\Invintus\\": "inc/"
