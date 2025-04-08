@@ -4,7 +4,7 @@
  * Plugin Name:       Invintus Media
  * Plugin URI:        https://taproot.agency
  * Description:       Integrates Invintus Media with WordPress
- * Version: 2.0.9
+ * Version: 2.0.10
  * Requires at least: 5.8
  * Requires PHP:      7.4
  * Author:            The Taproot Agency
@@ -19,7 +19,7 @@
 defined( 'ABSPATH' ) || exit; // Exit if accessed directly
 
 // Useful global constants.
-define( 'INVINTUS_PLUGIN_VERSION', '2.0.9' );
+define( 'INVINTUS_PLUGIN_VERSION', '2.0.10' );
 define( 'INVINTUS_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'INVINTUS_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 define( 'INVINTUS_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
