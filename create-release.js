@@ -6,7 +6,7 @@ const fsExtra = require('fs-extra');
 
 const execPromise = util.promisify(exec);
 
-// ─── CLI arguments ─────────────────────────────
+// ─── CLI Arguments ─────────────────────────────
 const args = process.argv.slice(2);
 const outdirArg = args.find(arg => arg.startsWith('outdir='));
 const versionArg = args.find(arg => arg.startsWith('version='));
@@ -19,6 +19,28 @@ const outputDir = outdirArg ? outdirArg.split('=')[1] : path.dirname(__filename)
 const newVersion = versionArg ? versionArg.split('=')[1] : null;
 
 const composerJson = JSON.parse(fs.readFileSync('composer.json', 'utf8'));
+
+const INCLUDE_LIST = [
+  'build',
+  'assets',
+  'inc',
+  'vendor',
+  'templates',
+  'views',
+  'invintus.php',
+  'LICENSE',
+  'doc.md'
+];
+
+// ─── Tag Checker ───────────────────────────────
+async function tagExists(tagName, cwd = '.') {
+  try {
+    await execPromise(`git rev-parse "${tagName}"`, { cwd });
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 // ─── Version Updater ───────────────────────────
 async function updateVersionInFiles(version) {
@@ -51,49 +73,15 @@ async function runComposerInstall() {
   console.log('✅ Composer install completed');
 }
 
-// ─── ZIP Creator ───────────────────────────────
-async function createZip() {
-  const pluginSlug = composerJson.name.split('/').pop();
-  const zipName = `${pluginSlug}.zip`;
-  const zipPath = path.join(outputDir, zipName);
-
-  const excludes = [
-    '.*',
-    'create-release.js',
-    'package.json',
-    'package-lock.json',
-    'composer.lock',
-    '*.zip',
-    'tests/*',
-    'src/*',
-    'README.md',
-    'CHANGELOG.md',
-    'pnpm-lock.yaml',
-    'phpcs.xml.dist',
-    'webpack.config.js',
-    '.dist-push/*',
-  ];
-
-  if (!fs.existsSync(outputDir)) {
-    fs.mkdirSync(outputDir, { recursive: true });
-  }
-
-  console.log('📦 Creating zip file...');
-  const zipCommand = `zip -r "${zipPath}" . -x ${excludes.map(p => `"${p}"`).join(' ')}`;
-  await execPromise(zipCommand, { maxBuffer: 1024 * 1024 * 10 });
-
-  console.log(`✅ Created zip: ${zipName}`);
-  return zipPath;
-}
-
 // ─── Dist Push & Tag ───────────────────────────
-async function pushToDistRepo(rawVersion, zipPath) {
+async function pushToDistRepo(rawVersion) {
   const tagVersion = `v${rawVersion}`;
   const DIST_REPO_URL = 'https://github.com/TVWIT/invintus-wp-plugin-dist.git';
   const MAIN_REPO = 'TVWIT/invintus-wp-plugin';
   const DIST_WORK_DIR = path.join(__dirname, '.dist-push');
 
   if (fs.existsSync(DIST_WORK_DIR)) fsExtra.removeSync(DIST_WORK_DIR);
+  fs.mkdirSync(DIST_WORK_DIR, { recursive: true });
 
   console.log(`📂 Cloning dist repo...`);
   await execPromise(`git clone ${DIST_REPO_URL} ${DIST_WORK_DIR}`);
@@ -101,24 +89,23 @@ async function pushToDistRepo(rawVersion, zipPath) {
   console.log('🧹 Cleaning dist contents...');
   await execPromise('git rm -rf .', { cwd: DIST_WORK_DIR });
 
-  const excludes = new Set([
-    '.git', '.github', 'node_modules', '.dist-push', 'tests', 'src',
-    'create-release.js', 'package-lock.json',
-    'README.md', 'CHANGELOG.md',
-    'webpack.config.js', 'phpcs.xml.dist', 'pnpm-lock.yaml'
-  ]);
-
-  const buildFiles = fs.readdirSync('.').filter(f => !excludes.has(f));
-  for (const file of buildFiles) {
-    fsExtra.copySync(path.join('.', file), path.join(DIST_WORK_DIR, file));
+  for (const file of INCLUDE_LIST) {
+    const srcPath = path.resolve(file);
+    const destPath = path.join(DIST_WORK_DIR, file);
+    if (fs.existsSync(srcPath)) {
+      fsExtra.copySync(srcPath, destPath);
+    } else {
+      console.warn(`⚠️  Missing expected file/folder: ${file}`);
+    }
   }
 
-  // Write minimal composer.json for Packagist
+  // Write Packagist-compatible composer.json
   const distComposerJson = {
-    name: "tvwit/invintus-wp-plugin",
+    name: "invintus/invintus-wp-plugin",
     type: "wordpress-plugin",
-    description: "Compiled release version of the Invintus WordPress Plugin",
+    description: "Official Invintus plugin for embedding live and on-demand video from Invintus Media Platform.",
     license: "MIT",
+    homepage: "https://invintus.com",
     require: {}
   };
   fs.writeFileSync(path.join(DIST_WORK_DIR, "composer.json"), JSON.stringify(distComposerJson, null, 2));
@@ -129,44 +116,65 @@ async function pushToDistRepo(rawVersion, zipPath) {
     await execPromise(`git commit -m "Release ${tagVersion}"`, { cwd: DIST_WORK_DIR });
   } catch (err) {
     if (err.stdout && err.stdout.includes('nothing to commit')) {
-      console.log('ℹ️  No changes to commit. Skipping git commit, tag, and push.');
-      return;
+      console.log('ℹ️  No changes to commit. Proceeding with tagging and release...');
     } else {
       throw err;
     }
   }
 
   if (!skipTag) {
-    await execPromise(`git tag ${tagVersion}`, { cwd: DIST_WORK_DIR });
+    const distTagExists = await tagExists(tagVersion, DIST_WORK_DIR);
+    if (!distTagExists) {
+      await execPromise(`git tag ${tagVersion}`, { cwd: DIST_WORK_DIR });
+      await execPromise(`git push origin ${tagVersion}`, { cwd: DIST_WORK_DIR });
+    } else {
+      console.log(`ℹ️ Tag ${tagVersion} already exists in dist repo.`);
+    }
   }
 
   await execPromise('git push origin main', { cwd: DIST_WORK_DIR });
-  if (!skipTag) {
-    await execPromise('git push origin --tags', { cwd: DIST_WORK_DIR });
-  }
 
-  // Also tag and push to main repo
   if (!skipTag) {
-    try {
+    const mainTagExists = await tagExists(tagVersion);
+    if (!mainTagExists) {
       await execPromise(`git tag ${tagVersion}`);
-    } catch {}
-    try {
       await execPromise(`git push origin ${tagVersion}`);
-    } catch {}
+    } else {
+      console.log(`ℹ️ Tag ${tagVersion} already exists in main repo.`);
+    }
   }
 
-  if (doRelease && zipPath) {
-    console.log('🚀 Creating GitHub release in dist repo...');
-    await execPromise(`gh release create ${tagVersion} "${zipPath}" --title "${tagVersion}" --notes "Automated release build" --repo TVWIT/invintus-wp-plugin-dist`);
-    console.log('🎉 GitHub release created in dist repo');
+  return DIST_WORK_DIR;
+}
 
-    console.log('🚀 Creating GitHub release in main repo...');
-    await execPromise(`gh release create ${tagVersion} "${zipPath}" --title "${tagVersion}" --notes "Automated release build" --repo ${MAIN_REPO}`);
-    console.log('🎉 GitHub release created in main repo');
+// ─── ZIP Creator from Dist ─────────────────────
+async function createZip(fromDir) {
+  const pluginSlug = composerJson.name.split('/').pop();
+  const zipName = `${pluginSlug}.zip`;
+  const zipPath = path.join(outputDir, zipName);
+
+  if (!fs.existsSync(fromDir)) {
+    console.error(`❌ Can't zip — folder does not exist: ${fromDir}`);
+    process.exit(1);
   }
 
-  fsExtra.removeSync(DIST_WORK_DIR);
-  console.log('🧽 Cleaned up dist folder');
+  console.log('📦 Creating zip from dist-push directory...');
+  const zipCommand = `cd "${fromDir}" && zip -r "${zipPath}" ${[...INCLUDE_LIST, 'composer.json'].map(f => `"${f}"`).join(' ')}`;
+  await execPromise(zipCommand, { maxBuffer: 1024 * 1024 * 10 });
+
+  console.log(`✅ Created zip: ${zipName}`);
+  return zipPath;
+}
+
+// ─── GitHub Release Creator ────────────────────
+async function createGitHubReleases(tagVersion, zipPath) {
+  console.log('🚀 Creating GitHub release in dist repo...');
+  await execPromise(`gh release create ${tagVersion} "${zipPath}" --title "${tagVersion}" --notes "Automated release build" --repo TVWIT/invintus-wp-plugin-dist`);
+  console.log('🎉 GitHub release created in dist repo');
+
+  console.log('🚀 Creating GitHub release in main repo...');
+  await execPromise(`gh release create ${tagVersion} "${zipPath}" --title "${tagVersion}" --notes "Automated release build" --repo TVWIT/invintus-wp-plugin`);
+  console.log('🎉 GitHub release created in main repo');
 }
 
 // ─── Main Runner ───────────────────────────────
@@ -192,13 +200,18 @@ async function main() {
   await runNpmBuild();
   await runComposerInstall();
 
+  let distPath = null;
   let zipPath = null;
-  if (!skipZip) {
-    zipPath = await createZip();
-  }
 
   if (doPush) {
-    await pushToDistRepo(rawVersion, zipPath);
+    distPath = await pushToDistRepo(rawVersion);
+    if (!skipZip) {
+      zipPath = await createZip(distPath);
+    }
+  }
+
+  if (doRelease && zipPath) {
+    await createGitHubReleases(tagVersion, zipPath);
   }
 }
 
