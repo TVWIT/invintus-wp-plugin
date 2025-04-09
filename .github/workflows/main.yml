@@ -1,0 +1,83 @@
+name: Build and Deploy to Dist Repo
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Trigger only on version tags like v1.2.3
+
+jobs:
+  build-and-push-dist:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      NODE_ENV: production
+
+    steps:
+      - name: 📂 Checkout Source Code
+        uses: actions/checkout@v3
+
+      - name: ♻ Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: ♻ Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer
+
+      - name: 📦 Install Node + Composer Deps
+        run: |
+          npm ci
+          composer install --no-dev --optimize-autoloader
+
+      - name: 📚 Extract Tag Version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: 📂 Clone dist repo
+        run: |
+          git clone https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/TVWIT/invintus-wp-plugin-dist.git .dist-push
+
+      - name: 🔄 Clean and Copy Files to dist-push
+        run: |
+          cd .dist-push
+          git rm -rf .
+          cd ..
+          mkdir -p .dist-push
+          cp -r build assets inc vendor templates views invintus.php LICENSE doc.md .dist-push/
+
+      - name: ✍ Write composer.json to dist
+        run: |
+          echo '{
+            "name": "invintus/invintus-wp-plugin",
+            "type": "wordpress-plugin",
+            "description": "Official Invintus plugin for embedding live and on-demand video from Invintus Media Platform.",
+            "license": "MIT",
+            "homepage": "https://invintus.com",
+            "require": {}
+          }' > .dist-push/composer.json
+
+      - name: ✅ Commit and Tag dist repo
+        run: |
+          cd .dist-push
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "Release v${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git tag -f v${{ steps.version.outputs.version }}
+          git push origin main
+          git push origin --tags
+
+      - name: 📦 Create GitHub Release and Upload ZIP
+        run: |
+          cd .dist-push
+          zip -r ../invintus-wp-plugin.zip build assets inc vendor templates views invintus.php LICENSE doc.md composer.json
+          cd ..
+          gh release create v${{ steps.version.outputs.version }} invintus-wp-plugin.zip \
+            --title "v${{ steps.version.outputs.version }}" \
+            --notes "Automated release build" \
+            --repo TVWIT/invintus-wp-plugin-dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
