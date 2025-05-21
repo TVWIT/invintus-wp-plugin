@@ -2,7 +2,7 @@ import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, Panel, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
 import createUniqueId from './uid';
 import { useEffect } from 'react';
-import { InvintusIconFullColor } from './components/InvintusIcon'; // Adjust the
+import { InvintusIconFullColor, InvintusIconLegacy } from './components/InvintusIcon'; // Adjust the
 import './editor.scss';
 import { __ } from '@wordpress/i18n';
 
@@ -184,7 +184,7 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
             {eventId ? (
               <div className="invintus-video-wrapper">
                 <header>
-                  <InvintusIconFullColor />
+                  {isLegacy ? <InvintusIconLegacy /> : <InvintusIconFullColor />}
                   <div className="invintus-event-label">
                     <span>{ __( 'Preview', 'invintus' ) }</span>
                   </div>
