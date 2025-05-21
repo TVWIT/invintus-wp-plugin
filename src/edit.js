@@ -2,7 +2,7 @@ import { useBlockProps, InspectorControls } from '@wordpress/block-editor';
 import { PanelBody, Panel, TextControl, ToggleControl, SelectControl } from '@wordpress/components';
 import createUniqueId from './uid';
 import { useEffect } from 'react';
-import { InvintusIconFullColor } from './components/InvintusIcon'; // Adjust the
+import { InvintusIconFullColor, InvintusIconLegacy } from './components/InvintusIcon'; // Adjust the
 import './editor.scss';
 import { __ } from '@wordpress/i18n';
 
@@ -20,10 +20,23 @@ import { __ } from '@wordpress/i18n';
  * @returns {WPElement}                  The element to render, defining the block's edit layout.
  */
 export default function Edit( { attributes, setAttributes, isSelected } ) {
-  // Destructure block attributes for easy access.
-  const eventId = attributes?.invintus_event_id ?? '';
-  const isSimpleEvent = attributes?.invintus_event_is_simple ?? false;
-  const playerPrefId = attributes?.invintus_player_pref_id ?? '';
+  let isLegacy = false;
+
+  // Handle both new format and legacy ACF format
+  let eventId, isSimpleEvent, playerPrefId;
+
+  if (attributes?.data) {
+    isLegacy = true;
+    // Legacy ACF format
+    eventId = attributes.data.invintus_event_id ?? '';
+    isSimpleEvent = attributes.data.invintus_event_is_simple ?? false;
+    playerPrefId = attributes.data.invintus_player_pref_id ?? '';
+  } else {
+    // New format
+    eventId = attributes?.invintus_event_id ?? '';
+    isSimpleEvent = attributes?.invintus_event_is_simple ?? false;
+    playerPrefId = attributes?.invintus_player_pref_id ?? '';
+  }
 
   // Check if the global configuration object is set.
   const isConfigured = typeof invintusConfig !== 'undefined' && invintusConfig.clientId;
@@ -35,7 +48,9 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
   })).sort((a, b) => a.label.localeCompare(b.label)) : [];
 
   // Use WordPress's useBlockProps for block wrapper properties.
-  const blockProps = useBlockProps( {} );
+  const blockProps = useBlockProps( {
+    className: isLegacy ? 'wp-block-taproot-invintus__legacy' : 'wp-block-taproot-invintus'
+  } );
 
   /**
    * This effect is responsible for launching the Invintus player.
@@ -87,11 +102,30 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
      * This allows the browser to finish any pending UI updates before re-rendering the component.
      */
     if ( newEventId !== eventId ) {
-      setAttributes( { invintus_event_id: '' } );
-
-      setTimeout( () => {
-        setAttributes( { invintus_event_id: newEventId } );
-      }, 0 );
+      // Handle both legacy ACF format and new format
+      if (attributes?.data) {
+        // Legacy ACF format - update the data object
+        setAttributes( {
+          data: {
+            ...attributes.data,
+            invintus_event_id: ''
+          }
+        } );
+        setTimeout( () => {
+          setAttributes( {
+            data: {
+              ...attributes.data,
+              invintus_event_id: newEventId
+            }
+          } );
+        }, 0 );
+      } else {
+        // New format
+        setAttributes( { invintus_event_id: '' } );
+        setTimeout( () => {
+          setAttributes( { invintus_event_id: newEventId } );
+        }, 0 );
+      }
     }
   };
 
@@ -102,8 +136,19 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
    * @param {boolean} value The new state of the toggle control.
    */
   const onChangeIsSimple = ( value ) => {
-    // Update the simple event attribute immediately.
-    setAttributes( { invintus_event_is_simple: value } );
+    // Handle both legacy ACF format and new format
+    if (attributes?.data) {
+      // Legacy ACF format
+      setAttributes( {
+        data: {
+          ...attributes.data,
+          invintus_event_is_simple: value
+        }
+      } );
+    } else {
+      // New format
+      setAttributes( { invintus_event_is_simple: value } );
+    }
   };
 
   /**
@@ -113,7 +158,19 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
    * @param {string} value The new player preference ID.
    */
   const onChangePlayerPref = ( value ) => {
-    setAttributes( { invintus_player_pref_id: value } );
+    // Handle both legacy ACF format and new format
+    if (attributes?.data) {
+      // Legacy ACF format
+      setAttributes( {
+        data: {
+          ...attributes.data,
+          invintus_player_pref_id: value
+        }
+      } );
+    } else {
+      // New format
+      setAttributes( { invintus_player_pref_id: value } );
+    }
   };
 
   // Render the block's editing interface.
@@ -127,7 +184,7 @@ export default function Edit( { attributes, setAttributes, isSelected } ) {
             {eventId ? (
               <div className="invintus-video-wrapper">
                 <header>
-                  <InvintusIconFullColor />
+                  {isLegacy ? <InvintusIconLegacy /> : <InvintusIconFullColor />}
                   <div className="invintus-event-label">
                     <span>{ __( 'Preview', 'invintus' ) }</span>
                   </div>

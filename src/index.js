@@ -19,6 +19,7 @@ import './style.scss';
  */
 import Edit from './edit';
 import metadata from './block.json';
+import { InvintusIconFullColor, InvintusIconLegacy } from './components/InvintusIcon';
 
 /**
  * Every block starts by registering a new block type definition.
@@ -30,4 +31,26 @@ registerBlockType( metadata.name, {
    * @see ./edit.js
    */
   edit: Edit,
+  icon: InvintusIconFullColor,
 } );
+
+// Register the legacy ACF block type directly
+registerBlockType( 'acf/invintus-event', {
+  title: 'Invintus Video (Legacy)',
+  icon: InvintusIconLegacy,
+  category: 'widgets',
+  supports: {
+    inserter: false, // Hide from block inserter/picker
+  },
+  attributes: {
+    data: {
+      type: 'object',
+      default: {}
+    }
+  },
+  edit: Edit,
+  save() {
+    return null; // Server-side rendering
+  }
+} );
+
