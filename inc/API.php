@@ -210,7 +210,12 @@ class API extends WP_REST_Controller
 
       $api_response = json_decode( $body, true );
 
-      $data = acf_maybe_get( $api_response, 'data', [] );
+      // Use the WordPress-native maybe_get or ours if ACF isn't available
+      if ( function_exists( 'acf_maybe_get' ) ):
+        $data = acf_maybe_get( $api_response, 'data', [] );
+      else:
+        $data = $this->maybe_get( $api_response, 'data', [] );
+      endif;
 
       $is_live = $data ? true : false;
 
@@ -733,13 +738,14 @@ class API extends WP_REST_Controller
   }
 
   /**
-   * Returns a new instance of the Invintus class.
+   * Returns the singleton instance of the Invintus class.
    *
-   * @return Invintus A new instance of the Invintus class.
+   * @return Invintus The singleton instance of the Invintus class.
    */
   private function invintus()
   {
-    return new Invintus();
+    // Return the singleton instance rather than creating a new instance
+    return Invintus::init();
   }
 
   /**
