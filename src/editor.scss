@@ -4,7 +4,12 @@
  * Replace them with your own styles or remove the file completely.
  */
 
-.wp-block-taproot-invintus {
+:root {
+  --invintus-primary: #124668;
+  --invintus-secondary: #72bf44;
+}
+
+.wp-block-taproot-invintus, .wp-block-taproot-invintus__legacy {
   .invintus-block {
     position: relative;
     width: 100%;
@@ -47,9 +52,9 @@
 
 
           span {
-            background: #e8e8e8;
+            background: var(--invintus-secondary);
             border-radius: 4px;
-            color: #999;
+            color: white;
             font-size: 10px;
             font-weight: 500;
             padding: 4px 8px;
@@ -87,6 +92,25 @@
         height: 250px;
         justify-content: center;
         padding: 0;
+      }
+    }
+  }
+}
+
+.wp-block-taproot-invintus__legacy {
+  .invintus-block {
+    .invintus-video-wrapper {
+      header {
+        .invintus-event-label {
+          span {
+            background: #e8e8e8;
+            color: #999;
+
+            &:after {
+              content: ' - Legacy';
+            }
+          }
+        }
       }
     }
   }
