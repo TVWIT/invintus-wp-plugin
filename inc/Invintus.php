@@ -406,6 +406,25 @@ class Invintus
   }
 
   /**
+   * Preloads the default template for the custom post type.
+   *
+   * This method sets up a default block template for the custom post type,
+   * ensuring that new posts are created with the Invintus block already in place.
+   *
+   * @return void
+   */
+  public function preload_content()
+  {
+    $page_type_object = get_post_type_object( $this->get_cpt_slug() );
+
+    if ( !$page_type_object ) return;
+
+    $page_type_object->template = [
+      ['taproot/invintus', []],
+    ];
+  }
+
+  /**
    * Refreshes the permalinks after plugin activation.
    * This ensures our custom post type and endpoints are properly registered.
    *
@@ -612,5 +631,6 @@ class Invintus
     add_filter( 'https_ssl_verify', [$this, 'maybe_verify_ssl'] );
     add_filter( 'get_post_status', [$this, 'maybe_allow_future_events'], 10, 2 );
     add_filter( 'get_post_status', [$this, 'allow_live_events'], 10, 2 );
+    add_filter( 'init', [$this, 'preload_content'] );
   }
 }
