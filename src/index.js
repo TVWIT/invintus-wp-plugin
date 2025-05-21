@@ -39,6 +39,9 @@ registerBlockType( 'acf/invintus-event', {
   title: 'Invintus Video (Legacy)',
   icon: InvintusIconLegacy,
   category: 'widgets',
+  supports: {
+    inserter: false, // Hide from block inserter/picker
+  },
   attributes: {
     data: {
       type: 'object',
