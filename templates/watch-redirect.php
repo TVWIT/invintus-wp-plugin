@@ -25,12 +25,16 @@ $post_statuses = ['publish', 'live'];
 if ( $can_public_future_events ) $post_statuses[] = 'future';
 
 $_args = [
-  'post_type'      => 'invintus_video',
-  'posts_per_page' => 1,
-  'post_status'    => 'any',
-  'no_found_rows'  => true,
-  'fields'         => 'ids',
-  'meta_query'     => [
+  'post_type'              => 'invintus_video',
+  'posts_per_page'         => 1,
+  'post_status'            => 'any',
+  'no_found_rows'          => true,
+  'fields'                 => 'ids',
+  'cache_results'          => false,              // Prevents caching - reduces memory usage
+  'update_post_meta_cache' => false,              // Skip post meta queries
+  'update_post_term_cache' => false,              // Skip post term queries
+  'suppress_filters'       => true,               // Prevents filters from being applied
+  'meta_query'             => [
     [
       'key'   => 'invintus_event_id',
       'value' => $event_id
