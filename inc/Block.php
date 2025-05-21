@@ -119,7 +119,7 @@ class Block
    */
   private function Invintus()
   {
-    return new Invintus();
+    return Invintus::init();
   }
 
   /**
