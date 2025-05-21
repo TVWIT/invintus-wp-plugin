@@ -315,13 +315,14 @@ class Settings
   }
 
   /**
-   * Returns a new instance of the Invintus class.
+   * Returns the singleton instance of the Invintus class.
    *
-   * @return Invintus The new instance of the Invintus class.
+   * @return Invintus The singleton instance of the Invintus class.
    */
   private function Invintus()
   {
-    return new Invintus();
+    // Return the singleton instance rather than creating a new instance
+    return Invintus::init();
   }
 
   /**
