@@ -210,7 +210,12 @@ class API extends WP_REST_Controller
 
       $api_response = json_decode( $body, true );
 
-      $data = acf_maybe_get( $api_response, 'data', [] );
+      // Use the WordPress-native maybe_get or ours if ACF isn't available
+      if ( function_exists( 'acf_maybe_get' ) ):
+        $data = acf_maybe_get( $api_response, 'data', [] );
+      else:
+        $data = $this->maybe_get( $api_response, 'data', [] );
+      endif;
 
       $is_live = $data ? true : false;
 
@@ -369,9 +374,7 @@ class API extends WP_REST_Controller
       'methods'             => WP_REST_Server::READABLE,
       'show_in_index'       => false,
       'callback'            => [$this, 'is_live'],
-      'permission_callback' => function( $request ) {
-        return true;
-      }
+      'permission_callback' => '__return_true'
     ] );
 
     register_rest_route( sprintf( '%s/v%s', $options['namespace'], $options['version'] ), 'settings/player_prefs', [
@@ -511,7 +514,7 @@ class API extends WP_REST_Controller
     $args = [
       'parent'      => $parent_id,
       'slug'        => sanitize_title( $category_name ),
-      'description' => $description
+      'description' => $category_description
     ];
 
     $term = wp_insert_term( $category_name, $taxonomy, $args );
@@ -523,7 +526,7 @@ class API extends WP_REST_Controller
     $term_field_id = sprintf( '%s_%d', $taxonomy, $term_id );
 
     update_term_meta( $term_id, 'invintus_category_id', $category_id );
-    update_term_meta( $term_id, 'invintus_parent_category_id', $child_id );
+    update_term_meta( $term_id, 'invintus_parent_category_id', $child_parent_id );
 
     return $term_id;
   }
@@ -650,7 +653,7 @@ class API extends WP_REST_Controller
 
     if ( !$term_exists ) return;
 
-    return (array) get_term( $term_exists['term_id'], $taxonomy );
+    return (array) get_term( $term_exists['term_id'], 'invintus_category' );
   }
 
   /**
@@ -676,7 +679,7 @@ class API extends WP_REST_Controller
   /**
    * Create array of extra post meta to import
    *
-   * @return void
+   * @return string[]
    */
   private function get_post_meta_keys()
   {
@@ -735,13 +738,14 @@ class API extends WP_REST_Controller
   }
 
   /**
-   * Returns a new instance of the Invintus class.
+   * Returns the singleton instance of the Invintus class.
    *
-   * @return Invintus A new instance of the Invintus class.
+   * @return Invintus The singleton instance of the Invintus class.
    */
   private function invintus()
   {
-    return new Invintus();
+    // Return the singleton instance rather than creating a new instance
+    return Invintus::init();
   }
 
   /**

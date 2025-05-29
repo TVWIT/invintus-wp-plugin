@@ -69,7 +69,7 @@ class Block
   {
     $settings = new Settings();
 
-    if ( !self::$script_localized && has_block( 'taproot/invintus' ) ):
+    if ( !self::$script_localized && ( has_block( 'taproot/invintus' ) || has_block( 'acf/invintus-event' ) ) ):
       wp_enqueue_script( 'invintus-player-script', $this->invintus()->get_invintus_script_url(), [], null, true );
 
       wp_localize_script( 'invintus-player-script', 'invintusConfig', [
@@ -119,7 +119,7 @@ class Block
    */
   private function Invintus()
   {
-    return new Invintus();
+    return Invintus::init();
   }
 
   /**

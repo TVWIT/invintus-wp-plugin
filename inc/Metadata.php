@@ -136,6 +136,6 @@ class Metadata
    */
   private function invintus()
   {
-    return new Invintus();
+    return Invintus::init();
   }
 }

@@ -72,12 +72,12 @@ class Settings
    */
   public function add_options_page()
   {
-    $this->settings_title = __( 'Invintus Video Settings', 'invintus' );
+    $settings_title = __( 'Invintus Video Settings', 'invintus' );
 
     // Add the submenu page.
     $this->hook_suffix = add_submenu_page(
       sprintf( 'edit.php?post_type=%s', $this->invintus()->get_cpt_slug() ),
-      $this->settings_title,
+      $settings_title,
       __( 'Settings', 'invintus' ),
       'manage_options',
       sprintf( '%s_settings', $this->invintus()->get_cpt_slug() ),
@@ -219,8 +219,8 @@ class Settings
     ];
 
     // If the INVINTUS_VENDOR_KEY constant is defined, add it to the headers.
-    if ( defined( 'INVINTUS_VENDOR_KEY' ) && INVINTUS_VENDOR_KEY )
-      $args['headers']['Wsc-api-key'] = INVINTUS_VENDOR_KEY;
+    if ( $this->get_api_key() )
+      $args['headers']['Wsc-api-key'] = $this->get_api_key();
 
     // Make the POST request.
     $response = wp_remote_post( $endpoint, $args );
@@ -315,13 +315,14 @@ class Settings
   }
 
   /**
-   * Returns a new instance of the Invintus class.
+   * Returns the singleton instance of the Invintus class.
    *
-   * @return Invintus The new instance of the Invintus class.
+   * @return Invintus The singleton instance of the Invintus class.
    */
   private function Invintus()
   {
-    return new Invintus();
+    // Return the singleton instance rather than creating a new instance
+    return Invintus::init();
   }
 
   /**
