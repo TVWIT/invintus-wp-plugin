@@ -20,6 +20,7 @@
     "env:wp": "wp-env run cli wp",
     "env:composer": "wp-env run cli --env-cwd=wp-content/plugins/invintus-wp-plugin composer",
     "env:phpcs": "wp-env run cli --env-cwd=wp-content/plugins/invintus-wp-plugin composer php:lint",
+    "env:reset": "bash scripts/reset-env.sh",
     "dist:build": "bash scripts/build-dist.sh"
   },
   "keywords": [
