@@ -116,6 +116,11 @@ class Settings
 
     wp_register_script( 'invintus-app', $this->invintus()->get_invintus_script_url(), ['underscore'], null, true );
 
+    $crossorigin = apply_filters( 'invintus/player/script/crossorigin', '' );
+    if ( $crossorigin ):
+      wp_script_add_data( 'invintus-app', 'crossorigin', $crossorigin );
+    endif;
+
     wp_localize_script( 'invintus-app', 'invintusConfig', [
       'nonce'                => wp_create_nonce( 'wp_rest' ),
       'clientId'             => $this->get_client_id(),
