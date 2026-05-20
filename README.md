@@ -40,6 +40,7 @@ Spins up a Dockerized WP at `http://localhost:8888`, mounts this repo as a plugi
 
 ```bash
 npm install
+npm run dist:build
 npm run env:start
 ```
 
@@ -67,7 +68,31 @@ Then create `.wp-env.override.json` (gitignored) at the repo root:
 
 Other env scripts: `env:stop`, `env:destroy`, `env:clean`, `env:logs`, `env:wp` (wp-cli passthrough), `env:composer`, `env:phpcs`.
 
-> Note: wp-env 9.x does not auto-write `.htaccess`, so pretty REST URLs (`/wp-json/...`) return Apache 404s on a fresh install. Either use the query-string form (`/index.php?rest_route=/...`) or write a standard WP `.htaccess` once into the container. Logging into wp-admin and saving the Permalinks page is the simplest fix.
+#### One-time bootstrap after a fresh `env:start`
+
+After every `env:destroy` + `env:start`, WP boots with Plain permalinks and no `.htaccess`. Pretty REST URLs (`/wp-json/...`) return Apache 404s until both are fixed. The "Save Permalinks in wp-admin" trick reports success but doesn't actually write `.htaccess` -- `/var/www/html` is owned by `root` inside the wp-env container so the `www-data` PHP process can't write there. Do it from the host instead:
+
+```sh
+# 1. set a non-plain permalink structure
+npx wp-env run cli -- wp rewrite structure '/%postname%' --hard
+
+# 2. write the standard WP .htaccess (as root, via the cli container)
+npx wp-env run cli -- bash -c 'cat > /var/www/html/.htaccess <<EOF
+# BEGIN WordPress
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+RewriteBase /
+RewriteRule ^index\\.php\$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule . /index.php [L]
+</IfModule>
+# END WordPress
+EOF'
+```
+
+After this the Settings page can save, REST routes resolve, and the block editor works normally. The file persists for the life of the env -- only re-run after a destroy.
 
 ### Traditional setup
 
@@ -110,6 +135,19 @@ add_filter( 'invintus/player/script/url', function() {
 
 The override is scoped to the screens that actually need the player (the Invintus settings page, the block editor, and front-end posts with the block). It does not load on unrelated wp-admin screens.
 
+### Cross-origin player builds
+
+If the override URL points to a build that uses dynamic `import()` for its own chunks (some bundlers split runtime code this way), the browser will refuse to resolve the relative module specifiers unless the `<script>` tag opts into CORS. Symptom: errors like `Failed to resolve module specifier './chunks/...'. The base URL is about:blank because import() is called from a CORS-cross-origin script.`
+
+Add a companion filter alongside the URL override:
+
+```php
+add_filter( 'invintus/player/script/url',         fn() => 'https://player.beta.invintusmedia.com/app.js' );
+add_filter( 'invintus/player/script/crossorigin', fn() => 'anonymous' );
+```
+
+This emits `crossorigin="anonymous"` on the player `<script>` tag. The target URL must return `Access-Control-Allow-Origin: *` (or matching) for the script to load -- if it doesn't, the script load itself will fail with a CORS error. The default URL does not need CORS, so leave the filter off if you're not overriding the URL.
+
 ## Extension points
 
 Most behavior is filterable. Grep `apply_filters` in `inc/` for the complete list. Highlights:
@@ -117,6 +155,7 @@ Most behavior is filterable. Grep `apply_filters` in `inc/` for the complete lis
 | Filter                              | Default                                | Purpose                              |
 |---                                  |---                                     |---                                   |
 | `invintus/player/script/url`        | `https://player.invintus.com/app.js`   | Player JS source URL                 |
+| `invintus/player/script/crossorigin`| `''` (no attribute)                    | `crossorigin` attribute on player tag (set to `'anonymous'` for cross-origin builds with dynamic imports) |
 | `invintus/api/url`                  | `https://api.v3.invintus.com/v2`       | Invintus API base                    |
 | `invintus/register/slug/cpt`        | `invintus_video`                       | CPT slug                             |
 | `invintus/register/slug/rewrite`    | `video`                                | Front-end rewrite slug               |
