@@ -108,6 +108,31 @@ You can configure various settings for the plugin:
 1. Go to Invintus Videos > Settings.
 2. Update the settings as needed, including API credentials and player preferences.
 
+## Advanced: overriding the player URL
+
+By default the plugin loads the Invintus player from `https://player.invintus.com/app.js`. Sites that need to point at a different build (for example, partner-supplied or self-hosted) can override the URL via a WordPress filter without modifying the plugin.
+
+The recommended pattern is a [must-use plugin](https://wordpress.org/documentation/article/must-use-plugins/) at `wp-content/mu-plugins/invintus-player.php`:
+
+```php
+<?php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    return 'https://example.com/path/to/your/app.js';
+} );
+```
+
+Why `mu-plugins`:
+
+- Loads before regular plugins, so the filter is in place when the plugin asks for the URL.
+- Cannot be deactivated from the wp-admin Plugins screen.
+- Survives plugin updates -- updating the Invintus plugin will not touch your override.
+
+To remove the override, delete the file. No restart or plugin reactivation required.
+
+The override can be scoped to specific routes by checking the current request inside the filter callback (e.g. `is_page()`, `is_singular()`, or `$_SERVER['REQUEST_URI']`). Always accept the default URL as the first argument and return it as the fallback so other filters and the default remain in effect.
+
+The player script is only enqueued where it is actually needed: the Invintus Settings page, the block editor, and front-end posts that contain the Invintus block. The filter does not run on screens that do not load the player.
+
 ## Support
 
 For support, please contact support@invintus.com.
