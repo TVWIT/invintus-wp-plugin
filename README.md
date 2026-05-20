@@ -94,6 +94,14 @@ EOF'
 
 After this the Settings page can save, REST routes resolve, and the block editor works normally. The file persists for the life of the env -- only re-run after a destroy.
 
+To do the whole "wipe everything and start over" cycle in one shot (destroy + rebuild dist + start + bootstrap):
+
+```bash
+npm run env:reset
+```
+
+That runs `scripts/reset-env.sh`. It destroys the wp-env database, rebuilds `build/` and `.dist-candidate/`, brings the env back up, and applies the bootstrap above. Use it to verify the "fresh clone" recipe end-to-end or when env state is the suspected cause of a bug. Does not touch `node_modules` -- delete that manually first if you also want a fresh `npm install`.
+
 ### Traditional setup
 
 Clone into an existing WP install:
