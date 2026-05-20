@@ -1,0 +1,11 @@
+{
+  "core": "https://wordpress.org/wordpress-6.6.2.zip",
+  "phpVersion": "8.1",
+  "plugins": ["."],
+  "config": {
+    "WP_DEBUG": true,
+    "WP_DEBUG_LOG": true,
+    "WP_DEBUG_DISPLAY": false,
+    "SCRIPT_DEBUG": false
+  }
+}
