@@ -133,6 +133,24 @@ The override can be scoped to specific routes by checking the current request in
 
 The player script is only enqueued where it is actually needed: the Invintus Settings page, the block editor, and front-end posts that contain the Invintus block. The filter does not run on screens that do not load the player.
 
+### Cross-origin player builds
+
+Some player builds split their runtime into separate chunks loaded via dynamic `import()`. When the player is served from a different origin than the site, the browser will refuse to resolve the relative chunk URLs unless the `<script>` tag is marked as a CORS-enabled request. Symptom: console errors like `Failed to resolve module specifier './chunks/...'`.
+
+If the override URL points to such a build, add a companion filter alongside the URL override:
+
+```php
+add_filter( 'invintus/player/script/url',         function() {
+    return 'https://example.com/path/to/your/app.js';
+} );
+
+add_filter( 'invintus/player/script/crossorigin', function() {
+    return 'anonymous';
+} );
+```
+
+The `invintus/player/script/crossorigin` filter sets the `crossorigin` attribute on the player `<script>` tag. The target URL must respond with `Access-Control-Allow-Origin: *` (or a matching origin) -- if it does not, the browser will reject the script load. The default Invintus player URL does not require this, so the filter should only be added when overriding the URL.
+
 ## Support
 
 For support, please contact support@invintus.com.
