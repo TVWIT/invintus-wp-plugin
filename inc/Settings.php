@@ -102,13 +102,20 @@ class Settings
    */
   public function admin_scripts( $hook_suffix )
   {
-    // Get the current screen
     $screen = get_current_screen();
 
-    // Register and enqueue the Invintus player script
+    // Only load the player on screens that actually use it: the Invintus
+    // settings page, and any block editor screen (where the Invintus block
+    // can be inserted and rendered as a live preview via edit.js). Loading
+    // it elsewhere injects player CSS into every wp-admin screen and can
+    // break unrelated admin UI.
+    $is_settings_page = $hook_suffix === $this->hook_suffix;
+    $is_block_editor  = $screen && method_exists( $screen, 'is_block_editor' ) && $screen->is_block_editor();
+
+    if ( !$is_settings_page && !$is_block_editor ) return;
+
     wp_register_script( 'invintus-app', $this->invintus()->get_invintus_script_url(), ['underscore'], null, true );
 
-    // Localize the script with necessary data
     wp_localize_script( 'invintus-app', 'invintusConfig', [
       'nonce'                => wp_create_nonce( 'wp_rest' ),
       'clientId'             => $this->get_client_id(),
@@ -120,11 +127,9 @@ class Settings
       'defaultWatchEndpoint' => $this->invintus()->get_default_watch_endpoint(),
     ] );
 
-    // Always enqueue the script on admin pages
     wp_enqueue_script( 'invintus-app' );
 
-    // If we're on the options page, enqueue additional scripts and styles
-    if ( $hook_suffix === $this->hook_suffix ):
+    if ( $is_settings_page ):
       $this->enqueue_options_page_styles();
       $this->enqueue_options_page_scripts();
     endif;
