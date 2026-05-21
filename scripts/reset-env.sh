@@ -36,6 +36,15 @@ npm run dist:build
 echo "==> starting wp-env"
 npm run env:start
 
+# Docker Desktop on macOS can lose bind-mount visibility when the host
+# path is removed and recreated (which is exactly what we just did to
+# .dist-candidate). The container ends up seeing an empty plugin dir
+# even though the host path is populated. Cycle stop+start to force
+# Docker to re-resolve the mount.
+echo "==> stop+start cycle to re-resolve bind-mount"
+npx wp-env stop
+npx wp-env start
+
 echo "==> post-start bootstrap: permalink structure"
 npx wp-env run cli -- wp rewrite structure '/%postname%' --hard
 
