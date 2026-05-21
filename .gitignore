@@ -14,7 +14,9 @@ build/
 .dist/
 /.dist-push
 CLAUDE.md
-.claude/
+.claude/*
+!.claude/skills/
+!.claude/settings.json
 .wp-env.override.json
 .dist-candidate/
 .local-mu-plugins/

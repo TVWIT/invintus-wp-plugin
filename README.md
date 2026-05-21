@@ -185,34 +185,60 @@ The dist repo is written **automatically** by this repo's release workflow. Do n
 
 ## Releasing a new version
 
-Releases are driven by **git tags** on this repo. The CI workflow ([`.github/workflows/main.yml`](.github/workflows/main.yml)) handles the build and publishes to the dist repo automatically.
+Releases are driven by `create-release.js`. The script handles version bumping, build, dist push, tagging both repos, and creating GitHub Releases in one command. There is a tag-based CI workflow as well (see below), but the primary release path is the script.
 
-1. Land your changes on `main` via PR.
-2. Bump the version in all three places (these must match):
-   - `invintus.php` plugin header (`Version:` line)
-   - `invintus.php` `INVINTUS_PLUGIN_VERSION` constant
-   - `package.json` `"version"` field
-3. Commit the version bump on `main`.
-4. Tag and push:
-   ```bash
-   git tag v2.0.12
-   git push origin v2.0.12
-   ```
-5. The `Build and Deploy to Dist Repo` workflow fires on the `v*.*.*` tag and:
-   - Runs `npm ci`, `composer install --no-dev --optimize-autoloader`, and `npm run build`
-   - Clones the dist repo, wipes it, and copies in `build assets inc vendor templates views invintus.php LICENSE doc.md` plus a stripped `composer.json`
-   - Commits, tags `v2.0.12` on the dist repo, and creates a GitHub Release there with `invintus-wp-plugin.zip` attached
+Requires host-installed `composer` (`brew install composer` on macOS).
 
-### Local fallback: `create-release.js`
+### Standard release sequence
 
-To build a release ZIP without going through CI (e.g. to hand a one-off build to a partner for testing):
+```sh
+# 1. Land changes on main via PR + merge
+gh pr merge <N> --merge --repo TVWIT/invintus-wp-plugin
 
-```bash
-node create-release.js                   # output to current directory
-node create-release.js outdir=/some/path # specify output directory
+# 2. Pull main locally
+git checkout main && git pull
+
+# 3. Dry-run first (no remote effect, just version bumps + build)
+node create-release.js version=2.0.13
+
+# 4. Inspect the result
+git status
+git diff invintus.php package.json
+ls build/
+
+# 5. If clean, run the real release
+node create-release.js version=2.0.13 --push --create-release
+
+# 6. Clean up post-release
+git checkout invintus.php package.json   # discard local bumps (existing convention)
+rm -f invintus-wp-plugin.zip             # release artifact left in repo root
 ```
 
-It runs `composer install --no-dev --optimize-autoloader` and zips per `.distignore`. The resulting ZIP is installable but **does not** update the dist repo -- only the tag-based CI flow does that.
+### What the script does
+
+1. Updates `invintus.php` (`Version:` header + `INVINTUS_PLUGIN_VERSION` constant) and `package.json` `"version"`. **These are not committed** -- the bumps live only in the dist repo. Source stays at its in-dev version after release.
+2. Runs `npm run build` and `composer install --no-dev --optimize-autoloader`.
+3. With `--push`: clones the dist repo, wipes it, copies in `build`, `assets`, `inc`, `vendor`, `templates`, `views`, `invintus.php`, `LICENSE`, `doc.md` plus a stripped `composer.json`. Commits `Release vX.Y.Z`, tags the dist repo, and tags the source repo at current HEAD. Pushes both.
+4. With `--create-release`: builds the ZIP and publishes a GitHub Release on both repos with the ZIP attached. Both releases share the same artifact (identical SHA-256).
+
+### Script flags
+
+| Flag | Effect |
+|---|---|
+| `version=X.Y.Z` | Required. `composer.json` has no `version` field, so the arg is mandatory. |
+| `outdir=PATH` | Where the ZIP gets dropped. Defaults to repo root. |
+| `--push` | Push to dist + tag both repos. Without this, the script is a local dry-run. |
+| `--create-release` | Publish GitHub Releases on both repos. Requires `--push`. |
+| `--no-zip` | Skip ZIP creation. |
+| `--no-tag` | Skip tagging (still does dist push if `--push` is set). |
+
+### Tag-based CI fallback
+
+`.github/workflows/main.yml` runs on any push of a `v*.*.*` tag and does roughly the same work as the script (npm ci + composer install + npm run build + copy to dist + zip + GitHub Release). It exists as a safety net if someone tags by hand (`git tag vX.Y.Z && git push origin vX.Y.Z`) without using the script. The standard path is the script.
+
+### History gotcha: orphan `v2.0.11`
+
+`v2.0.11` was tagged on `main` in May 2025 without an actual version bump (the commit only added `.distignore`/`.gitignore` changes). The dist's `Release v2.0.11` commit doesn't correspond to a coherent source release. Versions skipped from 2.0.10 -> 2.0.12. Don't reuse v2.0.11.
 
 ## License
 
