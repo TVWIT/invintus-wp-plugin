@@ -632,5 +632,34 @@ class Invintus
     add_filter( 'get_post_status', [$this, 'maybe_allow_future_events'], 10, 2 );
     add_filter( 'get_post_status', [$this, 'allow_live_events'], 10, 2 );
     add_filter( 'init', [$this, 'preload_content'] );
+    add_filter( 'script_loader_tag', [$this, 'maybe_add_player_crossorigin'], 10, 2 );
+  }
+
+  /**
+   * Injects a crossorigin attribute on the player <script> tag when the
+   * invintus/player/script/crossorigin filter returns a non-empty value.
+   *
+   * Required when overriding the player URL to a cross-origin build whose
+   * runtime loads chunks via dynamic import(): without CORS opt-in, the
+   * browser strips the script's base URL and rejects the relative chunk
+   * specifiers. The target URL must serve Access-Control-Allow-Origin
+   * headers matching the site origin.
+   *
+   * Applies to both enqueue handles used by the plugin: 'invintus-app'
+   * (Settings page + block editor) and 'invintus-player-script' (front-end
+   * block render).
+   *
+   * @param  string $tag    The full <script> tag HTML.
+   * @param  string $handle The script handle being rendered.
+   * @return string         The (possibly modified) tag.
+   */
+  public function maybe_add_player_crossorigin( $tag, $handle )
+  {
+    if ( !in_array( $handle, ['invintus-app', 'invintus-player-script'], true ) ) return $tag;
+
+    $crossorigin = apply_filters( 'invintus/player/script/crossorigin', '' );
+    if ( !$crossorigin ) return $tag;
+
+    return str_replace( '<script ', sprintf( '<script crossorigin="%s" ', esc_attr( $crossorigin ) ), $tag );
   }
 }
