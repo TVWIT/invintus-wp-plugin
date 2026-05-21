@@ -195,13 +195,13 @@ Releases are driven by **git tags** on this repo. The CI workflow ([`.github/wor
 3. Commit the version bump on `main`.
 4. Tag and push:
    ```bash
-   git tag v2.0.11
-   git push origin v2.0.11
+   git tag v2.0.12
+   git push origin v2.0.12
    ```
 5. The `Build and Deploy to Dist Repo` workflow fires on the `v*.*.*` tag and:
-   - Runs `npm ci` and `composer install --no-dev --optimize-autoloader`
+   - Runs `npm ci`, `composer install --no-dev --optimize-autoloader`, and `npm run build`
    - Clones the dist repo, wipes it, and copies in `build assets inc vendor templates views invintus.php LICENSE doc.md` plus a stripped `composer.json`
-   - Commits, tags `v2.0.11` on the dist repo, and creates a GitHub Release there with `invintus-wp-plugin.zip` attached
+   - Commits, tags `v2.0.12` on the dist repo, and creates a GitHub Release there with `invintus-wp-plugin.zip` attached
 
 ### Local fallback: `create-release.js`
 

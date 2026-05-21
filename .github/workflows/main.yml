@@ -32,6 +32,9 @@ jobs:
           npm ci
           composer install --no-dev --optimize-autoloader
 
+      - name: 🔨 Build assets
+        run: npm run build
+
       - name: 📚 Extract Tag Version
         id: version
         run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
