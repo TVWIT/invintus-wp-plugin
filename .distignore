@@ -16,5 +16,9 @@
 /create-release.js
 /.DS_Store
 /CLAUDE.md
+/.claude
+/.wp-env.json
+/.wp-env.override.json
+/scripts
 /.dist
 /.dist-push

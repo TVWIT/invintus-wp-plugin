@@ -108,6 +108,84 @@ You can configure various settings for the plugin:
 1. Go to Invintus Videos > Settings.
 2. Update the settings as needed, including API credentials and player preferences.
 
+## Advanced: overriding the player URL
+
+By default the plugin loads the Invintus player from `https://player.invintus.com/app.js`. Sites that need to point at a different build (for example, partner-supplied or self-hosted) can override the URL via a WordPress filter without modifying the plugin.
+
+The recommended pattern is a [must-use plugin](https://wordpress.org/documentation/article/must-use-plugins/) at `wp-content/mu-plugins/invintus-player.php`:
+
+```php
+<?php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    return 'https://example.com/path/to/your/app.js';
+} );
+```
+
+Why `mu-plugins`:
+
+- Loads before regular plugins, so the filter is in place when the plugin asks for the URL.
+- Cannot be deactivated from the wp-admin Plugins screen.
+- Survives plugin updates -- updating the Invintus plugin will not touch your override.
+
+To remove the override, delete the file. No restart or plugin reactivation required.
+
+The player script is only enqueued where it is actually needed: the Invintus Settings page, the block editor, and front-end posts that contain the Invintus block. The filter does not run on screens that do not load the player.
+
+### Scoped overrides
+
+The override can be limited to specific routes by checking the current request inside the filter callback. Always accept the default URL as the first argument and return it as the fallback so other filters and the default remain in effect.
+
+**One specific page (by slug):**
+
+```php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    if ( is_page( 'beta-player-test' ) ) {
+        return 'https://example.com/path/to/your/app.js';
+    }
+    return $url;
+} );
+```
+
+**One specific post (by ID):**
+
+```php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    if ( is_singular() && get_the_ID() === 1234 ) {
+        return 'https://example.com/path/to/your/app.js';
+    }
+    return $url;
+} );
+```
+
+**One URL path prefix (works for any route, including custom rewrites):**
+
+```php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    if ( str_starts_with( $_SERVER['REQUEST_URI'] ?? '', '/preview-beta' ) ) {
+        return 'https://example.com/path/to/your/app.js';
+    }
+    return $url;
+} );
+```
+
+### Cross-origin player builds
+
+Some player builds split their runtime into separate chunks loaded via dynamic `import()`. When the player is served from a different origin than the site, the browser will refuse to resolve the relative chunk URLs unless the `<script>` tag is marked as a CORS-enabled request. Symptom: console errors like `Failed to resolve module specifier './chunks/...'`.
+
+If the override URL points to such a build, add a companion filter alongside the URL override:
+
+```php
+add_filter( 'invintus/player/script/url', function() {
+    return 'https://example.com/path/to/your/app.js';
+} );
+
+add_filter( 'invintus/player/script/crossorigin', function() {
+    return 'anonymous';
+} );
+```
+
+The `invintus/player/script/crossorigin` filter sets the `crossorigin` attribute on the player `<script>` tag. The target URL must respond with `Access-Control-Allow-Origin: *` (or a matching origin) -- if it does not, the browser will reject the script load. The default Invintus player URL does not require this, so the filter should only be added when overriding the URL.
+
 ## Support
 
 For support, please contact support@invintus.com.
