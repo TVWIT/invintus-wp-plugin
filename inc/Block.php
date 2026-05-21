@@ -72,11 +72,6 @@ class Block
     if ( !self::$script_localized && ( has_block( 'taproot/invintus' ) || has_block( 'acf/invintus-event' ) ) ):
       wp_enqueue_script( 'invintus-player-script', $this->invintus()->get_invintus_script_url(), [], null, true );
 
-      $crossorigin = apply_filters( 'invintus/player/script/crossorigin', '' );
-      if ( $crossorigin ):
-        wp_script_add_data( 'invintus-player-script', 'crossorigin', $crossorigin );
-      endif;
-
       wp_localize_script( 'invintus-player-script', 'invintusConfig', [
         'clientId'     => $this->client_id,
         'playerPrefID' => $settings->get_option( 'invintus_player_preference_default' ) ?? '',
