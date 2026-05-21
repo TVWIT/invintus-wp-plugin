@@ -129,9 +129,44 @@ Why `mu-plugins`:
 
 To remove the override, delete the file. No restart or plugin reactivation required.
 
-The override can be scoped to specific routes by checking the current request inside the filter callback (e.g. `is_page()`, `is_singular()`, or `$_SERVER['REQUEST_URI']`). Always accept the default URL as the first argument and return it as the fallback so other filters and the default remain in effect.
-
 The player script is only enqueued where it is actually needed: the Invintus Settings page, the block editor, and front-end posts that contain the Invintus block. The filter does not run on screens that do not load the player.
+
+### Scoped overrides
+
+The override can be limited to specific routes by checking the current request inside the filter callback. Always accept the default URL as the first argument and return it as the fallback so other filters and the default remain in effect.
+
+**One specific page (by slug):**
+
+```php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    if ( is_page( 'beta-player-test' ) ) {
+        return 'https://example.com/path/to/your/app.js';
+    }
+    return $url;
+} );
+```
+
+**One specific post (by ID):**
+
+```php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    if ( is_singular() && get_the_ID() === 1234 ) {
+        return 'https://example.com/path/to/your/app.js';
+    }
+    return $url;
+} );
+```
+
+**One URL path prefix (works for any route, including custom rewrites):**
+
+```php
+add_filter( 'invintus/player/script/url', function( $url ) {
+    if ( str_starts_with( $_SERVER['REQUEST_URI'] ?? '', '/preview-beta' ) ) {
+        return 'https://example.com/path/to/your/app.js';
+    }
+    return $url;
+} );
+```
 
 ### Cross-origin player builds
 
@@ -140,7 +175,7 @@ Some player builds split their runtime into separate chunks loaded via dynamic `
 If the override URL points to such a build, add a companion filter alongside the URL override:
 
 ```php
-add_filter( 'invintus/player/script/url',         function() {
+add_filter( 'invintus/player/script/url', function() {
     return 'https://example.com/path/to/your/app.js';
 } );
 
