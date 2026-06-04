@@ -23,7 +23,19 @@
 const invintusWP = ( () => {
   return {
     init() {
-      this.loadPlayers()
+      this.whenReady( () => this.loadPlayers() )
+    },
+    // The player SDK (window.Invintus) is enqueued as a separate script with no
+    // guaranteed execution order relative to this view script (WP defers block
+    // view scripts by default). Poll briefly for the global before launching so
+    // we never hit "Invintus is not defined" when this script wins the race.
+    whenReady( cb, attempts = 0 ) {
+      if ( typeof window.Invintus !== 'undefined' && typeof window.Invintus.launch === 'function' ) return cb()
+      if ( attempts >= 200 ) { // ~10s at 50ms
+        console.error( '[invintus] player SDK never loaded -- check the invintus-player-script <script> tag and its URL' )
+        return
+      }
+      setTimeout( () => this.whenReady( cb, attempts + 1 ), 50 )
     },
     loadPlayers() {
       const $players = document.querySelectorAll( '.invintus-player' )
