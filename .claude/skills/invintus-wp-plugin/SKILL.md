@@ -188,3 +188,29 @@ Grep `apply_filters` in `inc/` for the complete list. Highlights:
 - `tranquil-drifting-coral.md` -- a plan-mode artifact
 
 Read these for historical context if needed; they document the "why" behind decisions that look unobvious in commit history.
+
+# Release process notes
+
+Example release process 
+
+```sh
+# 1. Merge PR #14
+gh pr merge 14 --merge --repo TVWIT/invintus-wp-plugin
+
+# 2. Sync main
+git checkout main && git pull
+
+# 3. Dry run — local version bump + build only, no remote effect
+node create-release.js version=2.0.13
+
+# 4. Inspect
+git status                              # build/ populated?
+git diff invintus.php package.json      # 2.0.10 -> 2.0.13 bumps look right?
+
+# 5. Real release — builds, clones dist, copies, tags BOTH repos, pushes, GH releases
+node create-release.js version=2.0.13 --push --create-release
+
+# 6. Discard the in-place bump (source stays "in-dev" per convention) + remove the zip
+git checkout invintus.php package.json
+rm -f invintus-wp-plugin.zip
+```
