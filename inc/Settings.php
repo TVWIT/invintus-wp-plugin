@@ -194,7 +194,7 @@ class Settings
    * Gets the player preferences from the Invintus API.
    *
    * This method makes a POST request to the 'Player/getPlayerPreference' endpoint of the Invintus API.
-   * It uses the 'clientID' and 'Wsc-api-key' headers for authentication.
+   * It authenticates with the client API key in the 'Authorization' header and the 'clientID' in the body.
    * It caches the response in a transient for 1 day.
    * If the transient exists, it returns the cached data.
    * If the request is successful, it returns the player preferences.
@@ -224,8 +224,10 @@ class Settings
     ];
 
     // If the INVINTUS_VENDOR_KEY constant is defined, add it to the headers.
-    if ( $this->get_api_key() )
-      $args['headers']['Wsc-api-key'] = $this->get_api_key();
+    // Never send the client API key here: the API treats Wsc-api-key as a
+    // vendor key and rejects a client key with "API key authentication failed".
+    if ( defined( 'INVINTUS_VENDOR_KEY' ) && INVINTUS_VENDOR_KEY )
+      $args['headers']['Wsc-api-key'] = INVINTUS_VENDOR_KEY;
 
     // Make the POST request.
     $response = wp_remote_post( $endpoint, $args );

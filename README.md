@@ -42,6 +42,8 @@ Spins up a Dockerized WP at `http://localhost:8888`, mounts this repo as a plugi
 npm install
 npm run dist:build
 npm run env:start
+# or
+npm i && npx wp-env stop && npx wp-env start
 ```
 
 Then visit http://localhost:8888/wp-admin (login: `admin` / `password`).
